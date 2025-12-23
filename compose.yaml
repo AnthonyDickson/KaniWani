@@ -1,0 +1,24 @@
+name: kaniwani
+
+services:
+  web:
+    # Replace 'latest' with the latest version tag, e.g. 0.1.0 to avoid suprise
+    # breakages.
+    image: ghcr.io/anthonydickson/kaniwani:latest
+    # This is the same as the default command defined in the image.
+    command: ./start.sh run
+    ports:
+      # Change the port on the left if you want to change the port your PC
+      # connects to.
+      - "8080:8080"
+    environment:
+      # Replace this with something harder to guess. This value is safe to
+      # store in plaintext on your server since the database in unencrypted
+      # anyway... just don't store it publicly if you are hosting this app on
+      # the public internet.
+      SECRET_KEY_BASE: FOOBAR
+    volumes:
+      # Replace ${PWD}/kaniwani with an absolute path to a directory where you want the
+      # application database to be saved.
+      - ${PWD}/kaniwani:/app/data
+

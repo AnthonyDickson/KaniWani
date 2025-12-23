@@ -1,0 +1,26 @@
+name: test
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        subproject: [shared, server, client]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: "28"
+          gleam-version: "1.13.0"
+          rebar3-version: "3"
+
+      - run: cd ${{ matrix.subproject }} && gleam deps download
+      - run: cd ${{ matrix.subproject }} && gleam test
+      - run: cd ${{ matrix.subproject }} && gleam format --check src test
