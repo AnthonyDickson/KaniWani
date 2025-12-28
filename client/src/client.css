@@ -1,4 +1,5 @@
-/* This file and the below directive are needed to automatically trigger the
-Lustre dev tools to generate the CSS files with Tailwind CSS. Note that the
-filename must match the `name` entry in `gleam.toml` for this to work. */
 @import "tailwindcss";
+/* This file and the above directive are needed to automatically trigger the
+Lustre dev tools to generate the CSS files with Tailwind CSS. Note that the
+filename must match the `name` entry in `gleam.toml`, and the directive must
+appear before this comment for this to work. */
