@@ -3,6 +3,9 @@ ARG GLEAM_VERSION=v1.13.0
 # Build stage - compile the application
 FROM ghcr.io/gleam-lang/gleam:${GLEAM_VERSION}-erlang-alpine AS builder
 
+# For building jargon, a dependency of argus
+RUN apk add --no-cache build-base
+
 # Add project code
 COPY ./shared /build/shared
 COPY ./client /build/client
