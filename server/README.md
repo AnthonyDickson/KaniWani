@@ -5,6 +5,12 @@ To view the web app, first [build the client](../client/README.md#Development) a
 
 ## Development
 
-```sh
+```shell
 gleam run   # Start the server
+```
+
+Run the server and restart on file changes:
+
+```shell
+watchexec --restart -w src/ -w priv/ -- gleam run
 ```
