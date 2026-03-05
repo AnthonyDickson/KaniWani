@@ -2,7 +2,10 @@ SRC := $(wildcard src/*.*)
 OUTDIR = ../server/priv/static
 OUTPUT = $(OUTDIR)/client.js $(OUTDIR)/index.html $(OUTDIR)/client.css
 
-.PHONY = build watch test clean
+.PHONY = devserver build watch test clean
+
+devserver:
+	gleam run -m lustre/dev start
 
 $(OUTPUT): $(SRC)
 	gleam run -m lustre/dev build --outdir=$(OUTDIR)
