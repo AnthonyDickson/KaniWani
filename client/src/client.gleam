@@ -1,6 +1,5 @@
 import gleam/io
 import gleam/list
-import gleam/option.{None}
 import gleam/result
 import gleam/string
 import gleam/uri.{type Uri}
@@ -12,17 +11,20 @@ import lustre/element.{type Element}
 import lustre/element/html
 import modem
 
-import auth
-import model.{type Model, Authenticated, CheckingAuth, LoadingPage, LoggedOut}
+import effects/auth
+import effects/router
+import model.{
+  type Model, CheckingAuth, FooPage, HomePage, LoggedOut, NotFoundPage,
+}
 import msg.{
   type Msg, ClientChangedRoute, HomeMsg, LogInMsg, RegisterMsg,
-  ServerAuthenticatedUser, ServerLoggedOutUser,
+  ServerAuthenticatedUser, ServerLoggedOutUser, UserNavigatedToHomePage,
 }
 import page/foo
 import page/home
 import page/login
 import page/register
-import route.{type Route, Foo, Home, LogIn, LogOut, Register}
+import route.{type Route, Foo, Home, LogIn, LogOut, NotFound, Register}
 
 pub fn main() -> Nil {
   let app = lustre.application(init, update, view)
@@ -37,7 +39,7 @@ fn init(_: Nil) -> #(Model, Effect(Msg)) {
     |> result.unwrap(uri.empty)
     |> route.from_uri
 
-  let model = CheckingAuth(route)
+  let model = CheckingAuth
 
   #(
     model,
@@ -57,49 +59,62 @@ fn on_url_change(uri: Uri) -> Msg {
 
 fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
   case model, msg {
-    CheckingAuth(route), LogInMsg(ServerAuthenticatedUser(Ok(_))) -> #(
-      LoadingPage(route, Home),
-      home.get_list() |> effect.map(HomeMsg),
+    CheckingAuth, LogInMsg(ServerAuthenticatedUser(Ok(_))) -> #(
+      model.empty_home_page_model(),
+      router.navigate_to(Home),
     )
 
-    CheckingAuth(..), LogInMsg(ServerAuthenticatedUser(Error(_))) -> #(
-      model.empty_logged_out(LogIn),
-      modem.push(route.to_path_string(LogIn), None, None),
+    CheckingAuth, LogInMsg(ServerAuthenticatedUser(Error(_))) -> #(
+      model.empty_logged_out_model(LogIn),
+      router.navigate_to(LogIn),
     )
 
     LoggedOut(..), ClientChangedRoute(Register as route)
     | LoggedOut(..), ClientChangedRoute(LogIn as route)
-    -> #(model.empty_logged_out(route), set_title(route.to_page_title(route)))
+    -> #(
+      model.empty_logged_out_model(route),
+      set_title(route.to_page_title(route)),
+    )
 
     LoggedOut(..), ClientChangedRoute(_) -> #(
       model,
-      modem.push(route.to_path_string(model.route), None, None),
+      router.navigate_to(model.route),
     )
 
     LoggedOut(..), LogInMsg(msg) -> login.update(model, msg)
     LoggedOut(..), RegisterMsg(msg) -> register.update(model, msg)
 
-    Authenticated(..), ClientChangedRoute(LogOut) -> #(
+    _, ClientChangedRoute(LogOut) -> #(model, auth.send_log_out_request())
+
+    _, ClientChangedRoute(LogIn) | _, ClientChangedRoute(Register) -> #(
       model,
-      auth.send_log_out_request(),
+      modem.back(1),
     )
 
-    Authenticated(..), ClientChangedRoute(LogIn)
-    | Authenticated(..), ClientChangedRoute(Register)
-    -> #(model, modem.push(route.to_path_string(model.route), None, None))
+    _, ClientChangedRoute(Home as route) -> #(
+      model.empty_home_page_model(),
+      effect.batch([
+        effect.from(fn(dispatch) { dispatch(HomeMsg(UserNavigatedToHomePage)) }),
+        set_title(route.to_page_title(route)),
+      ]),
+    )
 
-    Authenticated(..), ClientChangedRoute(route) -> #(
-      Authenticated(..model, route:),
+    _, ClientChangedRoute(Foo as route) -> #(
+      FooPage,
       set_title(route.to_page_title(route)),
     )
 
-    Authenticated(..), ServerLoggedOutUser(..) -> #(
-      model.empty_logged_out(LogIn),
-      modem.push(route.to_path_string(LogIn), None, None),
+    _, ClientChangedRoute(NotFound as route) -> #(
+      NotFoundPage,
+      set_title(route.to_page_title(route)),
     )
 
-    Authenticated(..), HomeMsg(msg) | LoadingPage(..), HomeMsg(msg) ->
-      home.update(model, msg)
+    _, ServerLoggedOutUser(..) -> #(
+      model.empty_logged_out_model(LogIn),
+      router.navigate_to(LogIn),
+    )
+
+    HomePage(..), HomeMsg(msg) -> home.update(model, msg)
 
     _, _ -> {
       io.println_error(
@@ -125,16 +140,19 @@ fn set_title_js(title: String) -> Nil
 
 fn view(model: Model) -> Element(Msg) {
   let nav_items = case model {
-    Authenticated(..) -> [Home, Foo, LogOut]
-    _ -> [LogIn, Register]
+    LoggedOut(..) -> [LogIn, Register]
+    _ -> [Home, Foo, LogOut]
   }
+
   let is_current_page = fn(route: Route) -> Bool {
     case model {
-      Authenticated(route: current_route, ..)
-      | LoggedOut(route: current_route, ..) -> route == current_route
-      LoadingPage(..) | CheckingAuth(..) -> False
+      HomePage(..) -> route == Home
+      FooPage -> route == Foo
+      LoggedOut(route: current_route, ..) -> route == current_route
+      CheckingAuth | NotFoundPage -> False
     }
   }
+
   html.div([], [
     html.nav(
       [attribute.class("p-2 bg-white shadow-md")],
@@ -153,27 +171,35 @@ fn view(model: Model) -> Element(Msg) {
     ),
     html.main([attribute.class("p-5")], [
       case model {
-        Authenticated(route:, items:, new_item:, saving:, error:) -> {
-          case route {
-            Home -> home.view(items:, new_item:, saving:, error:)
-            Foo -> foo.view()
-            _ -> view_not_found()
-          }
-        }
-        LoadingPage(..) -> view_loading()
-        CheckingAuth(..) -> view_loading()
+        HomePage(items:, new_item:, loading:, saving:, error:) ->
+          home.view(items:, new_item:, loading:, saving:, error:)
+        FooPage -> foo.view()
+        CheckingAuth -> view_loading()
         LoggedOut(password:, route: Register, registration_error:, ..) ->
           register.view(password, registration_error)
         LoggedOut(password:, route: LogIn, log_in_error:, ..) ->
           login.view(password, log_in_error)
-        LoggedOut(..) -> view_not_found()
+        _ -> view_not_found()
       },
     ]),
   ])
 }
 
 fn view_not_found() -> Element(Msg) {
-  html.div([], [html.h1([], [html.text("Page Not Found")])])
+  html.div([], [
+    html.h1([attribute.class("text-lg font-bold")], [
+      html.text("Page Not Found"),
+    ]),
+    html.a(
+      [
+        attribute.href(route.to_path_string(Home)),
+        attribute.class("text-blue-600 underline"),
+      ],
+      [
+        html.text("Take me home"),
+      ],
+    ),
+  ])
 }
 
 fn view_loading() -> Element(Msg) {

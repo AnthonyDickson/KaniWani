@@ -1,5 +1,5 @@
 import gleam/io
-import gleam/option.{type Option, None, Some}
+import gleam/option.{type Option, Some}
 import gleam/string
 
 import lustre/attribute
@@ -7,10 +7,10 @@ import lustre/effect.{type Effect}
 import lustre/element.{type Element}
 import lustre/element/html
 import lustre/event
-import modem
 import rsvp
 
 import api_route
+import effects/router
 import error_view
 import model.{type Model, LoggedOut}
 import msg.{
@@ -33,8 +33,8 @@ pub fn update(model: Model, msg: RegisterMsg) -> #(Model, Effect(Msg)) {
     )
 
     LoggedOut(..), ServerRegisteredUser(Ok(_)) -> #(
-      model.empty_logged_out(LogIn),
-      modem.push(route.to_path_string(LogIn), None, None),
+      model.empty_logged_out_model(LogIn),
+      router.navigate_to(LogIn),
     )
 
     LoggedOut(..), ServerRegisteredUser(Error(_)) -> #(

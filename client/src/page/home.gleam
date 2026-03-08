@@ -1,76 +1,81 @@
 import gleam/int
+import gleam/io
 import gleam/json
 import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/result
+import gleam/string
 
 import lustre/attribute
 import lustre/effect.{type Effect}
 import lustre/element.{type Element}
 import lustre/element/html
 import lustre/event
-import modem
 import rsvp
 
 import api_route.{Groceries}
-import auth
+import effects/auth
 import error_view
 import groceries.{type GroceryItem, GroceryItem}
 import json_helpers
-import model.{type Model, Authenticated, LoadingPage}
+import model.{type Model, HomePage}
 import msg.{
   type HomeMsg, type Msg, HomeMsg, ServerLoadedList, ServerSavedList,
-  UserAddedItem, UserSavedList, UserTypedNewItem, UserUpdatedQuantity,
+  UserAddedItem, UserNavigatedToHomePage, UserSavedList, UserTypedNewItem,
+  UserUpdatedQuantity,
 }
-import route.{Home}
 import rsvp_helpers
 
 pub fn update(model: Model, msg: HomeMsg) -> #(Model, Effect(Msg)) {
   case model, msg {
-    Authenticated(..), UserSavedList -> #(
-      Authenticated(..model, saving: True),
-      save_list(model.items) |> effect.map(HomeMsg),
-    )
+    HomePage(..), UserNavigatedToHomePage -> {
+      #(model, get_list() |> effect.map(HomeMsg))
+    }
 
-    Authenticated(..), ServerSavedList(Ok(_)) -> #(
-      Authenticated(..model, saving: False, error: None),
-      effect.none(),
-    )
-
-    LoadingPage(_, target_route), ServerLoadedList(Ok(response)) -> {
+    HomePage(..), ServerLoadedList(Ok(response)) -> {
       let items = json.parse(response.body, groceries.grocery_list_decoder())
       let #(items, error) = case items {
         Ok(items) -> #(items, None)
         Error(error) -> #([], Some(json_helpers.describe_error(error)))
       }
       #(
-        Authenticated(target_route, items:, new_item: "", saving: False, error:),
-        modem.push(route.to_path_string(Home), None, None),
+        HomePage(items:, new_item: "", loading: False, saving: False, error:),
+        effect.none(),
       )
     }
 
-    Authenticated(..), ServerSavedList(Error(error)) -> {
+    HomePage(..), ServerLoadedList(Error(error)) -> {
       use <- auth.auto_logout(error)
       #(
-        Authenticated(
+        HomePage(
           ..model,
+          loading: False,
           saving: False,
-          error: Some("Failed to save list"),
+          error: Some(rsvp_helpers.describe_error(error)),
         ),
         effect.none(),
       )
     }
 
-    Authenticated(..), ServerLoadedList(Error(error)) -> #(
-      Authenticated(
-        ..model,
-        saving: False,
-        error: Some(rsvp_helpers.describe_error(error)),
-      ),
-      modem.push(route.to_path_string(Home), None, None),
+    HomePage(..), UserSavedList -> #(
+      HomePage(..model, saving: True),
+      save_list(model.items) |> effect.map(HomeMsg),
     )
 
-    Authenticated(..), UserAddedItem -> {
+    HomePage(..), ServerSavedList(Ok(_)) -> #(
+      HomePage(..model, saving: False, error: None),
+      effect.none(),
+    )
+
+    HomePage(..), ServerSavedList(Error(error)) -> {
+      use <- auth.auto_logout(error)
+      #(
+        HomePage(..model, saving: False, error: Some("Failed to save list")),
+        effect.none(),
+      )
+    }
+
+    HomePage(..), UserAddedItem -> {
       case model.new_item {
         "" -> #(model, effect.none())
         name -> {
@@ -78,19 +83,19 @@ pub fn update(model: Model, msg: HomeMsg) -> #(Model, Effect(Msg)) {
           let updated_items = list.append(model.items, [item])
 
           #(
-            Authenticated(..model, items: updated_items, new_item: ""),
+            HomePage(..model, items: updated_items, new_item: ""),
             effect.none(),
           )
         }
       }
     }
 
-    Authenticated(..), UserTypedNewItem(text) -> #(
-      Authenticated(..model, new_item: text),
+    HomePage(..), UserTypedNewItem(text) -> #(
+      HomePage(..model, new_item: text),
       effect.none(),
     )
 
-    Authenticated(..), UserUpdatedQuantity(index:, quantity:) -> {
+    HomePage(..), UserUpdatedQuantity(index:, quantity:) -> {
       let updated_items =
         list.index_map(model.items, fn(item, item_index) {
           case item_index == index {
@@ -99,13 +104,21 @@ pub fn update(model: Model, msg: HomeMsg) -> #(Model, Effect(Msg)) {
           }
         })
 
-      #(Authenticated(..model, items: updated_items), effect.none())
+      #(HomePage(..model, items: updated_items), effect.none())
     }
-    _, _ -> #(model, effect.none())
+    _, _ -> {
+      io.println_error(
+        "Unhandled model and msg combination: "
+        <> string.inspect(model)
+        <> " and "
+        <> string.inspect(msg),
+      )
+      #(model, effect.none())
+    }
   }
 }
 
-pub fn get_list() -> Effect(HomeMsg) {
+fn get_list() -> Effect(HomeMsg) {
   let url = api_route.to_string(Groceries)
 
   rsvp.get(url, rsvp.expect_ok_response(ServerLoadedList))
@@ -121,6 +134,7 @@ fn save_list(items: List(GroceryItem)) -> Effect(HomeMsg) {
 pub fn view(
   items items: List(GroceryItem),
   new_item new_item: String,
+  loading loading: Bool,
   saving saving: Bool,
   error error: Option(String),
 ) -> Element(Msg) {
@@ -132,6 +146,29 @@ pub fn view(
     #("gap", "1em"),
   ]
 
+  case loading {
+    True -> loading_view(styles)
+    False -> loaded_view(styles, items, new_item, saving, error)
+  }
+}
+
+fn loading_view(styles: List(#(String, String))) -> Element(Msg) {
+  html.div([attribute.styles(styles)], [
+    html.h1(
+      [attribute.class("text-3xl font-bold underline text-center mt-10")],
+      [html.text("Grocery List")],
+    ),
+    html.p([], [html.text("Loading..")]),
+  ])
+}
+
+fn loaded_view(
+  styles: List(#(String, String)),
+  items: List(GroceryItem),
+  new_item: String,
+  saving: Bool,
+  error: Option(String),
+) -> Element(Msg) {
   html.div([attribute.styles(styles)], [
     html.h1(
       [attribute.class("text-3xl font-bold underline text-center mt-10")],

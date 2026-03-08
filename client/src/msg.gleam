@@ -16,6 +16,7 @@ pub type Msg {
 }
 
 pub type HomeMsg {
+  UserNavigatedToHomePage
   ServerSavedList(Result(Response(String), Error))
   ServerLoadedList(Result(Response(String), Error))
   UserAddedItem
