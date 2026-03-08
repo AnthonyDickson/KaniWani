@@ -4,15 +4,16 @@ import groceries.{type GroceryItem}
 import route.{type Route}
 
 pub type Model {
-  Authenticated(
-    route: Route,
+  HomePage(
     items: List(GroceryItem),
     new_item: String,
+    loading: Bool,
     saving: Bool,
     error: Option(String),
   )
-  LoadingPage(show: Route, next: Route)
-  CheckingAuth(Route)
+  FooPage
+  NotFoundPage
+  CheckingAuth
   LoggedOut(
     route: Route,
     /// The password entered in the log in or registration form
@@ -22,6 +23,10 @@ pub type Model {
   )
 }
 
-pub fn empty_logged_out(route: Route) -> Model {
+pub fn empty_home_page_model() -> Model {
+  HomePage(items: [], new_item: "", loading: True, saving: False, error: None)
+}
+
+pub fn empty_logged_out_model(route: Route) -> Model {
   LoggedOut(route, password: "", log_in_error: None, registration_error: None)
 }

@@ -1,13 +1,13 @@
 import gleam/http
 import gleam/http/request
-import gleam/option.{None, Some}
+import gleam/option.{None}
 
 import lustre/effect.{type Effect}
 import modem
 import rsvp.{type Error}
 
 import api_route.{Token, TokenStatus}
-import model.{type Model, LoggedOut}
+import model.{type Model}
 import msg.{type Msg, LogInMsg, ServerAuthenticatedUser, ServerLoggedOutUser}
 import route.{LogIn}
 
@@ -17,12 +17,7 @@ pub fn auto_logout(
 ) -> #(Model, Effect(Msg)) {
   case error {
     rsvp.HttpError(resp) if resp.status == 401 -> #(
-      LoggedOut(
-        LogIn,
-        password: "",
-        log_in_error: Some("Token expired or is invalid. Please sign in again"),
-        registration_error: None,
-      ),
+      model.empty_logged_out_model(LogIn),
       modem.push(route.to_path_string(LogIn), None, None),
     )
     _ -> callback()
@@ -54,8 +49,8 @@ pub fn send_log_out_request() -> Effect(Msg) {
   |> rsvp.send(rsvp.expect_any_response(ServerLoggedOutUser))
 }
 
-@external(javascript, "./client.ffi.mjs", "getScheme")
+@external(javascript, "./auth.ffi.mjs", "getScheme")
 fn get_scheme_js() -> String
 
-@external(javascript, "./client.ffi.mjs", "getHost")
+@external(javascript, "./auth.ffi.mjs", "getHost")
 fn get_host_js() -> String

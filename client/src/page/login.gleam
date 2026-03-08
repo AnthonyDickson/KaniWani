@@ -10,13 +10,13 @@ import lustre/event
 import rsvp
 
 import api_route.{Token}
+import effects/router
 import error_view
-import model.{type Model, LoadingPage, LoggedOut}
+import model.{type Model, LoggedOut}
 import msg.{
-  type LogInMsg, type Msg, HomeMsg, LogInMsg, ServerAuthenticatedUser,
-  UserSentLogInForm, UserTypedPassword,
+  type LogInMsg, type Msg, LogInMsg, ServerAuthenticatedUser, UserSentLogInForm,
+  UserTypedPassword,
 }
-import page/home
 import password
 import route.{Home}
 
@@ -33,8 +33,8 @@ pub fn update(model: Model, msg: LogInMsg) -> #(Model, Effect(Msg)) {
     )
 
     LoggedOut(..), ServerAuthenticatedUser(Ok(_)) -> #(
-      LoadingPage(model.route, Home),
-      home.get_list() |> effect.map(HomeMsg),
+      model.empty_home_page_model(),
+      router.navigate_to(Home),
     )
 
     LoggedOut(..), ServerAuthenticatedUser(Error(_)) -> #(
