@@ -6,9 +6,9 @@ To view the web app, first [build the client](#development) and then [start the 
 ## Development
 
 ```sh
-make init  # Perform initial setup 
-make watch # Watch files, test and then build
-make build # Build the client
-make test  # Run the tests
-make clean # Delete build artifacts
+make watch     # Watch files, test and then build
+make build     # Build the client
+make devserver # Run the Lustre dev server, useful for the live reloading.
+make test      # Run the tests
+make clean     # Delete build artifacts
 ```
