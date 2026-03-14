@@ -41,6 +41,7 @@ RUN echo -e '#!/bin/sh\nexec ./entrypoint.sh "$@"' > ./start.sh \
 # Set environment variables
 ENV HOST=0.0.0.0
 ENV PORT=8080
+ENV DATABASE_PATH=/app/data/kaniwani.db
 
 # Expose the port the server will run on
 EXPOSE $PORT
