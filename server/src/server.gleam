@@ -15,6 +15,7 @@ import wisp/wisp_mist
 
 import api_route.{Groceries, Register, Token, TokenStatus}
 import grocery
+import log_in
 import registration
 import token
 
@@ -60,7 +61,7 @@ fn handle_request(
     Get, Some(Groceries) -> grocery.handle_get_all_groceries(req, db_connection)
     Post, Some(Groceries) -> grocery.handle_save_groceries(req, db_connection)
     Post, Some(Register) -> registration.handle_registration(req, db_connection)
-    Post, Some(Token) -> token.handle_create_token(req, db_connection)
+    Post, Some(Token) -> log_in.handle_log_in(req, db_connection)
     Delete, Some(Token) -> token.handle_delete_token(req)
     Get, Some(TokenStatus) -> token.handle_validate_token(req)
     Get, _ -> serve_index()

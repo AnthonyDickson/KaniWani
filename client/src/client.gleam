@@ -22,7 +22,7 @@ import msg.{
 }
 import page/foo
 import page/home
-import page/login
+import page/log_in
 import page/register
 import route.{type Route, Foo, Home, LogIn, LogOut, NotFound, Register}
 
@@ -81,7 +81,7 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
       router.navigate_to(model.route),
     )
 
-    LoggedOut(..), LogInMsg(msg) -> login.update(model, msg)
+    LoggedOut(..), LogInMsg(msg) -> log_in.update(model, msg)
     LoggedOut(..), RegisterMsg(msg) -> register.update(model, msg)
 
     _, ClientChangedRoute(LogOut) -> #(model, auth.send_log_out_request())
@@ -178,7 +178,7 @@ fn view(model: Model) -> Element(Msg) {
         LoggedOut(password:, route: Register, registration_error:, ..) ->
           register.view(password, registration_error)
         LoggedOut(password:, route: LogIn, log_in_error:, ..) ->
-          login.view(password, log_in_error)
+          log_in.view(password, log_in_error)
         _ -> view_not_found()
       },
     ]),

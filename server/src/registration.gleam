@@ -24,7 +24,8 @@ pub fn handle_registration(req: Request, db_connection: Connection) -> Response 
 
   let outcome = {
     use password <- result.try(
-      decode.run(json, password.password_decoder())
+      json
+      |> decode.run(password.password_decoder())
       |> result.map_error(fn(_) { InvalidJson }),
     )
 
@@ -34,7 +35,8 @@ pub fn handle_registration(req: Request, db_connection: Connection) -> Response 
     )
 
     use password_hash <- result.try(
-      hash_password(password)
+      password
+      |> hash_password
       |> result.map_error(fn(_) { HashingFailed }),
     )
 
