@@ -1,6 +1,5 @@
 # To Do
 
-- Once a password is set, do not allow the password to be changed
 - Use https://hexdocs.pm/gzxcvbn/1.0.0/index.html for checking password strength
   - Can use on both frontend and backend. Use debounce on frontend?
 - Automatic token refresh

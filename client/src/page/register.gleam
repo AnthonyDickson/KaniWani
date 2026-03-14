@@ -1,3 +1,4 @@
+import gleam/http/response.{Response}
 import gleam/io
 import gleam/option.{type Option, Some}
 import gleam/string
@@ -7,7 +8,7 @@ import lustre/effect.{type Effect}
 import lustre/element.{type Element}
 import lustre/element/html
 import lustre/event
-import rsvp
+import rsvp.{HttpError}
 
 import api_route
 import effects/router
@@ -35,6 +36,18 @@ pub fn update(model: Model, msg: RegisterMsg) -> #(Model, Effect(Msg)) {
     LoggedOut(..), ServerRegisteredUser(Ok(_)) -> #(
       model.empty_logged_out_model(LogIn),
       router.navigate_to(LogIn),
+    )
+
+    LoggedOut(..),
+      ServerRegisteredUser(Error(HttpError(Response(status: 409, ..))))
+    -> #(
+      LoggedOut(
+        ..model,
+        registration_error: Some(
+          "A password has been registered already, please log in",
+        ),
+      ),
+      effect.none(),
     )
 
     LoggedOut(..), ServerRegisteredUser(Error(_)) -> #(

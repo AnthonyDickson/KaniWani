@@ -4,7 +4,7 @@ import gleam/result
 import gleam/string
 
 import argus.{type HashError, type Hashes}
-import sqlight.{type Connection, type Error}
+import sqlight.{type Connection, type Error, ConstraintPrimarykey, SqlightError}
 import wisp.{type Request, type Response}
 
 import password
@@ -15,7 +15,8 @@ type RegistrationError {
   WeakPassword
   InvalidJson
   HashingFailed
-  StorageFailed
+  StorageFailed(Error)
+  PasswordExists
 }
 
 pub fn handle_registration(req: Request, db_connection: Connection) -> Response {
@@ -38,14 +39,19 @@ pub fn handle_registration(req: Request, db_connection: Connection) -> Response 
     )
 
     write_password_hash(db_connection, password_hash.encoded_hash)
-    |> result.map_error(fn(_) { StorageFailed })
   }
 
   case outcome {
     Ok(_) -> wisp.no_content()
     Error(InvalidJson) -> wisp.bad_request("Invalid JSON")
     Error(WeakPassword) -> wisp.bad_request("Weak Password")
-    Error(_) -> wisp.internal_server_error()
+    Error(PasswordExists) ->
+      wisp.response(409)
+      |> wisp.html_body("Password already exists, sign in instead")
+    Error(error) -> {
+      wisp.log_error(string.inspect(error))
+      wisp.internal_server_error()
+    }
   }
 }
 
@@ -63,13 +69,19 @@ fn hash_password(password: String) -> Result(Hashes, HashError) {
 fn write_password_hash(
   db_connection: Connection,
   password_hash: String,
-) -> Result(Nil, Error) {
+) -> Result(Nil, RegistrationError) {
   let sql = "INSERT INTO password (id, password_hash) VALUES (?, ?)"
-  sqlight.query(
-    sql,
-    on: db_connection,
-    with: [sqlight.int(0), sqlight.text(password_hash)],
-    expecting: decode.success(Nil),
-  )
-  |> result.map(fn(_) { Nil })
+  let r =
+    sqlight.query(
+      sql,
+      on: db_connection,
+      with: [sqlight.int(0), sqlight.text(password_hash)],
+      expecting: decode.success(Nil),
+    )
+  case r {
+    Ok(_) -> Ok(Nil)
+    Error(SqlightError(code: ConstraintPrimarykey, message: _, offset: -1)) ->
+      Error(PasswordExists)
+    Error(error) -> Error(StorageFailed(error))
+  }
 }
