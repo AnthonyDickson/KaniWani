@@ -26,6 +26,8 @@
             ];
 
             SECRET_KEY_BASE = "AVERYSECRETSECRET";
+            # Relative to server/ directory
+            DATABASE_PATH = "data/kaniwani.sqlite";
             HOST = "127.0.0.1";
             PORT = "3000";
           };
