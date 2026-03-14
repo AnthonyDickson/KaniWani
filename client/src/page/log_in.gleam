@@ -1,3 +1,4 @@
+import gleam/http/response.{Response}
 import gleam/io
 import gleam/option.{type Option, None, Some}
 import gleam/string
@@ -7,7 +8,7 @@ import lustre/effect.{type Effect}
 import lustre/element.{type Element}
 import lustre/element/html
 import lustre/event
-import rsvp
+import rsvp.{HttpError}
 
 import api_route.{Token}
 import effects/router
@@ -35,6 +36,16 @@ pub fn update(model: Model, msg: LogInMsg) -> #(Model, Effect(Msg)) {
     LoggedOut(..), ServerAuthenticatedUser(Ok(_)) -> #(
       model.empty_home_page_model(),
       router.navigate_to(Home),
+    )
+
+    LoggedOut(..),
+      ServerAuthenticatedUser(Error(HttpError(Response(status: 404, ..))))
+    -> #(
+      LoggedOut(
+        ..model,
+        log_in_error: Some("Please set a password before logging in"),
+      ),
+      effect.none(),
     )
 
     LoggedOut(..), ServerAuthenticatedUser(Error(_)) -> #(

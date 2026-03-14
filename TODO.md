@@ -1,7 +1,7 @@
 # To Do
 
-- Return 404 when logging in but a password has not been set yet, and display an error message that points the user to
-  the registration page
+- Set domain in auth token, use env to set to localhost for dev and a proper domain in the docker image
+- Return 303 and redirect to login page on registration when a password has already been set
 - Use https://hexdocs.pm/gzxcvbn/1.0.0/index.html for checking password strength
   - Can use on both frontend and backend. Use debounce on frontend?
 - Automatic token refresh
