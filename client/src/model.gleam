@@ -1,6 +1,9 @@
 import gleam/option.{type Option, None}
 
+import gzxcvbn.{type Feedback, type Options}
+
 import groceries.{type GroceryItem}
+import password
 import route.{type Route}
 
 pub type Model {
@@ -19,8 +22,14 @@ pub type Model {
     /// The password entered in the log in or registration form
     password: String,
     log_in_error: Option(String),
-    registration_error: Option(String),
+    registration_error: Option(RegistrationError),
+    gzxcvbn_options: Options,
   )
+}
+
+pub type RegistrationError {
+  String(String)
+  Feedback(Feedback)
 }
 
 pub fn empty_home_page_model() -> Model {
@@ -28,5 +37,11 @@ pub fn empty_home_page_model() -> Model {
 }
 
 pub fn empty_logged_out_model(route: Route) -> Model {
-  LoggedOut(route, password: "", log_in_error: None, registration_error: None)
+  LoggedOut(
+    route,
+    password: "",
+    log_in_error: None,
+    registration_error: None,
+    gzxcvbn_options: password.get_gzxcvbn_opts(),
+  )
 }
