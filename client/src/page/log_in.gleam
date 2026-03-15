@@ -101,7 +101,7 @@ pub fn view(
     False -> "password"
   }
 
-  html.div(
+  html.main(
     [
       attribute.class(
         "min-h-screen bg-gray-50 flex items-center justify-center",

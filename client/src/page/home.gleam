@@ -24,6 +24,8 @@ import msg.{
   UserAddedItem, UserNavigatedToHomePage, UserSavedList, UserTypedNewItem,
   UserUpdatedQuantity,
 }
+import navbar
+import route.{Home}
 import rsvp_helpers
 
 pub fn update(model: Model, msg: HomeMsg) -> #(Model, Effect(Msg)) {
@@ -146,14 +148,16 @@ pub fn view(
     #("gap", "1em"),
   ]
 
-  case loading {
+  let contents = case loading {
     True -> loading_view(styles)
     False -> loaded_view(styles, items, new_item, saving, error)
   }
+
+  html.div([], [navbar.view(Home), contents])
 }
 
 fn loading_view(styles: List(#(String, String))) -> Element(Msg) {
-  html.div([attribute.styles(styles)], [
+  html.main([attribute.styles(styles)], [
     html.h1(
       [attribute.class("text-3xl font-bold underline text-center mt-10")],
       [html.text("Grocery List")],
@@ -169,7 +173,7 @@ fn loaded_view(
   saving: Bool,
   error: Option(String),
 ) -> Element(Msg) {
-  html.div([attribute.styles(styles)], [
+  html.main([attribute.styles(styles)], [
     html.h1(
       [attribute.class("text-3xl font-bold underline text-center mt-10")],
       [html.text("Grocery List")],

@@ -3,6 +3,8 @@ import lustre/element
 import lustre/element/html
 
 import msg
+import navbar
+import route.{Foo}
 
 pub fn view() -> element.Element(msg.Msg) {
   let styles = [
@@ -13,7 +15,10 @@ pub fn view() -> element.Element(msg.Msg) {
     #("gap", "1em"),
   ]
 
-  html.div([attribute.styles(styles)], [
-    html.h1([], [html.text("Foo")]),
+  html.div([], [
+    navbar.view(Foo),
+    html.main([attribute.styles(styles)], [
+      html.h1([], [html.text("Foo")]),
+    ]),
   ])
 }

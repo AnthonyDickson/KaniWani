@@ -2,8 +2,8 @@ import gleam/io
 import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/string
-import gzxcvbn
 
+import gzxcvbn
 import lustre/attribute
 import lustre/effect.{type Effect}
 import lustre/element.{type Element}
@@ -136,7 +136,7 @@ pub fn view(
     False -> "password"
   }
 
-  html.div(
+  html.main(
     [
       attribute.class(
         "min-h-screen bg-gray-50 flex items-center justify-center",
