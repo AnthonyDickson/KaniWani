@@ -27,12 +27,14 @@ pub type HomeMsg {
 
 pub type LogInMsg {
   UserTypedPassword(String)
+  UserCheckedShowPassword(Bool)
   UserSentLogInForm
   ServerAuthenticatedUser(Result(Response(String), Error))
 }
 
 pub type RegisterMsg {
   UserTypedRegisterPassword(String)
+  UserCheckedShowRegisterPassword(Bool)
   UserSentRegistrationForm
   ServerRegisteredUser(Result(Response(String), Error))
 }

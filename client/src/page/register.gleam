@@ -17,13 +17,19 @@ import error_view
 import model.{type Model, type RegistrationError, Feedback, LoggedOut, String}
 import msg.{
   type Msg, type RegisterMsg, RegisterMsg, ServerRegisteredUser,
-  UserSentRegistrationForm, UserTypedRegisterPassword,
+  UserCheckedShowRegisterPassword, UserSentRegistrationForm,
+  UserTypedRegisterPassword,
 }
 import password
 import route.{LogIn}
 
 pub fn update(model: Model, msg: RegisterMsg) -> #(Model, Effect(Msg)) {
   case model, msg {
+    LoggedOut(..), UserCheckedShowRegisterPassword(show_password) -> #(
+      LoggedOut(..model, show_password:),
+      effect.none(),
+    )
+
     LoggedOut(gzxcvbn_options:, ..), UserTypedRegisterPassword(password) -> {
       case password.check_password_strength(password, gzxcvbn_options) {
         Ok(_) -> #(
@@ -85,13 +91,21 @@ fn send_registration_request(password: String) -> Effect(Msg) {
   )
 }
 
-pub fn view(password: String, error: Option(RegistrationError)) -> Element(Msg) {
+pub fn view(
+  password: String,
+  show_password: Bool,
+  error: Option(RegistrationError),
+) -> Element(Msg) {
   let handle_form_submission = fn(_name_value_pairs: List(#(String, String))) -> Msg {
     RegisterMsg(UserSentRegistrationForm)
   }
 
   let handle_user_input = fn(input) {
     RegisterMsg(UserTypedRegisterPassword(input))
+  }
+
+  let handle_show_password_checked = fn(input) {
+    RegisterMsg(UserCheckedShowRegisterPassword(input))
   }
 
   let error_element = case password, error {
@@ -117,34 +131,118 @@ pub fn view(password: String, error: Option(RegistrationError)) -> Element(Msg) 
     _, _ -> False
   }
 
-  html.div([], [
-    html.h1([attribute.class("text-xl")], [html.text("Register")]),
-    html.form([event.on_submit(handle_form_submission)], [
-      html.label([attribute.for("password")], [html.text("Password")]),
-      html.input([
-        attribute.id("password"),
-        attribute.type_("password"),
-        attribute.value(password),
-        attribute.placeholder("********"),
-        attribute.required(True),
-        attribute.minlength(0),
-        event.on_input(handle_user_input)
-          |> event.debounce(400),
-      ]),
-      html.button(
-        [
-          attribute.class("rounded text-white  px-2 py-2"),
-          attribute.classes([
-            #("bg-blue-500", !submit_disabled),
-            #("bg-blue-300", submit_disabled),
-          ]),
-          attribute.role("submit"),
-          attribute.disabled(submit_disabled),
-          attribute.aria_disabled(submit_disabled),
-        ],
-        [html.text("Register")],
+  let password_input_type = case show_password {
+    True -> "text"
+    False -> "password"
+  }
+
+  html.div(
+    [
+      attribute.class(
+        "min-h-screen bg-gray-50 flex items-center justify-center",
       ),
-      error_element,
-    ]),
-  ])
+    ],
+    [
+      html.div(
+        [
+          attribute.class(
+            "w-80 bg-white border border-gray-200 rounded-lg p-8 space-y-6",
+          ),
+        ],
+        [
+          html.h1([attribute.class("text-xl font-semibold text-gray-800")], [
+            html.text("Register"),
+          ]),
+          html.form(
+            [
+              // https://technology.blog.gov.uk/2021/04/19/simple-things-are-complicated-making-a-show-password-option/
+              // https://stackoverflow.com/a/14788666
+              attribute.autocomplete("off"),
+              attribute.class("space-y-4"),
+              event.on_submit(handle_form_submission),
+            ],
+            [
+              // Password field
+              html.div([attribute.class("space-y-1")], [
+                html.label(
+                  [
+                    attribute.for("password"),
+                    attribute.class("text-sm text-gray-600"),
+                  ],
+                  [html.text("Password")],
+                ),
+                html.input([
+                  attribute.id("password"),
+                  attribute.type_(password_input_type),
+                  attribute.value(password),
+                  attribute.placeholder("••••••••"),
+                  attribute.required(True),
+                  attribute.minlength(0),
+                  attribute.class(
+                    "w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-blue-400",
+                  ),
+                  event.on_input(handle_user_input)
+                    |> event.debounce(400),
+                ]),
+              ]),
+
+              // Show password toggle
+              html.div(
+                [attribute.class("flex items-center gap-2 cursor-pointer")],
+                [
+                  html.input([
+                    attribute.id("show-password"),
+                    attribute.type_("checkbox"),
+                    attribute.checked(show_password),
+                    event.on_check(handle_show_password_checked),
+                  ]),
+                  html.label(
+                    [
+                      attribute.for("show-password"),
+                      attribute.class("text-sm text-gray-600"),
+                    ],
+                    [
+                      html.text("Show password"),
+                    ],
+                  ),
+                ],
+              ),
+
+              // Submit button
+              html.button(
+                [
+                  attribute.type_("submit"),
+                  attribute.disabled(submit_disabled),
+                  attribute.aria_disabled(submit_disabled),
+                  attribute.classes([
+                    #(
+                      "w-full py-2 rounded text-sm text-white transition-colors",
+                      True,
+                    ),
+                    #("bg-blue-500 hover:bg-blue-600", !submit_disabled),
+                    #("bg-blue-300 cursor-not-allowed", submit_disabled),
+                  ]),
+                ],
+                [html.text("Register")],
+              ),
+
+              error_element,
+            ],
+          ),
+          html.p([], [
+            html.text("Already have a password? "),
+            html.a(
+              [
+                attribute.href(route.to_path_string(LogIn)),
+                attribute.class("text-blue-500"),
+              ],
+              [
+                html.text("Log in here"),
+              ],
+            ),
+          ]),
+        ],
+      ),
+    ],
+  )
 }

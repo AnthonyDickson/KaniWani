@@ -169,16 +169,21 @@ fn view(model: Model) -> Element(Msg) {
         )
       }),
     ),
-    html.main([attribute.class("p-5")], [
+    html.main([], [
       case model {
         HomePage(items:, new_item:, loading:, saving:, error:) ->
           home.view(items:, new_item:, loading:, saving:, error:)
         FooPage -> foo.view()
         CheckingAuth -> view_loading()
-        LoggedOut(password:, route: Register, registration_error:, ..) ->
-          register.view(password, registration_error)
-        LoggedOut(password:, route: LogIn, log_in_error:, ..) ->
-          log_in.view(password, log_in_error)
+        LoggedOut(
+          password:,
+          route: Register,
+          registration_error:,
+          show_password:,
+          ..,
+        ) -> register.view(password, show_password, registration_error)
+        LoggedOut(password:, route: LogIn, log_in_error:, show_password:, ..) ->
+          log_in.view(password, show_password, log_in_error)
         _ -> view_not_found()
       },
     ]),

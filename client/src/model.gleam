@@ -21,6 +21,7 @@ pub type Model {
     route: Route,
     /// The password entered in the log in or registration form
     password: String,
+    show_password: Bool,
     log_in_error: Option(String),
     registration_error: Option(RegistrationError),
     gzxcvbn_options: Options,
@@ -40,6 +41,7 @@ pub fn empty_logged_out_model(route: Route) -> Model {
   LoggedOut(
     route,
     password: "",
+    show_password: False,
     log_in_error: None,
     registration_error: None,
     gzxcvbn_options: password.get_gzxcvbn_opts(),
