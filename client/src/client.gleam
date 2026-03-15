@@ -1,5 +1,4 @@
 import gleam/io
-import gleam/list
 import gleam/result
 import gleam/string
 import gleam/uri.{type Uri}
@@ -24,7 +23,7 @@ import page/foo
 import page/home
 import page/log_in
 import page/register
-import route.{type Route, Foo, Home, LogIn, LogOut, NotFound, Register}
+import route.{Foo, Home, LogIn, LogOut, NotFound, Register}
 
 pub fn main() -> Nil {
   let app = lustre.application(init, update, view)
@@ -139,50 +138,22 @@ fn set_title_js(title: String) -> Nil
 // View -----------------------------------------------------------------------
 
 fn view(model: Model) -> Element(Msg) {
-  let nav_items = case model {
-    LoggedOut(..) -> [LogIn, Register]
-    _ -> [Home, Foo, LogOut]
+  case model {
+    HomePage(items:, new_item:, loading:, saving:, error:) ->
+      home.view(items:, new_item:, loading:, saving:, error:)
+    FooPage -> foo.view()
+    CheckingAuth -> view_loading()
+    LoggedOut(
+      route: Register,
+      password:,
+      show_password:,
+      registration_error:,
+      ..,
+    ) -> register.view(password, show_password, registration_error)
+    LoggedOut(route: LogIn, password:, show_password:, log_in_error:, ..) ->
+      log_in.view(password, show_password, log_in_error)
+    _ -> view_not_found()
   }
-
-  let is_current_page = fn(route: Route) -> Bool {
-    case model {
-      HomePage(..) -> route == Home
-      FooPage -> route == Foo
-      LoggedOut(route: current_route, ..) -> route == current_route
-      CheckingAuth | NotFoundPage -> False
-    }
-  }
-
-  html.div([], [
-    html.nav(
-      [attribute.class("p-2 bg-white shadow-md")],
-      list.map(nav_items, fn(route) {
-        html.a(
-          [
-            attribute.href(route.to_path_string(route)),
-            attribute.class("mx-1 p-1"),
-            attribute.classes([
-              #("border-b-2 border-blue-500", is_current_page(route)),
-            ]),
-          ],
-          [html.text(route.to_page_name(route))],
-        )
-      }),
-    ),
-    html.main([attribute.class("p-5")], [
-      case model {
-        HomePage(items:, new_item:, loading:, saving:, error:) ->
-          home.view(items:, new_item:, loading:, saving:, error:)
-        FooPage -> foo.view()
-        CheckingAuth -> view_loading()
-        LoggedOut(password:, route: Register, registration_error:, ..) ->
-          register.view(password, registration_error)
-        LoggedOut(password:, route: LogIn, log_in_error:, ..) ->
-          log_in.view(password, log_in_error)
-        _ -> view_not_found()
-      },
-    ]),
-  ])
 }
 
 fn view_not_found() -> Element(Msg) {

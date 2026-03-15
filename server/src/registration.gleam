@@ -1,15 +1,13 @@
-import gleam/bool
 import gleam/dynamic/decode
 import gleam/result
 import gleam/string
 
-import argus.{type HashError, type Hashes}
+import argus
+import gzxcvbn.{type Options}
 import sqlight.{type Connection, type Error, ConstraintPrimarykey, SqlightError}
 import wisp.{type Request, type Response}
 
 import password
-
-const min_password_length = 16
 
 type RegistrationError {
   WeakPassword
@@ -19,25 +17,27 @@ type RegistrationError {
   PasswordExists
 }
 
-pub fn handle_registration(req: Request, db_connection: Connection) -> Response {
+pub fn handle_registration(
+  req: Request,
+  db_connection: Connection,
+  gzxcvbn_opts: Options,
+) -> Response {
   use json <- wisp.require_json(req)
 
   let outcome = {
     use password <- result.try(
-      json
-      |> decode.run(password.password_decoder())
-      |> result.map_error(fn(_) { InvalidJson }),
+      decode.run(json, password.password_decoder())
+      |> result.replace_error(InvalidJson),
     )
 
-    use <- bool.guard(
-      when: string.length(password) < min_password_length,
-      return: Error(WeakPassword),
+    use password <- result.try(
+      password.check_password_strength(password, gzxcvbn_opts)
+      |> result.replace_error(WeakPassword),
     )
 
     use password_hash <- result.try(
-      password
-      |> hash_password
-      |> result.map_error(fn(_) { HashingFailed }),
+      hash_password(password)
+      |> result.replace_error(HashingFailed),
     )
 
     write_password_hash(db_connection, password_hash.encoded_hash)
@@ -57,7 +57,7 @@ pub fn handle_registration(req: Request, db_connection: Connection) -> Response 
   }
 }
 
-fn hash_password(password: String) -> Result(Hashes, HashError) {
+fn hash_password(password) {
   argus.hasher()
   |> argus.algorithm(argus.Argon2id)
   |> argus.time_cost(3)
@@ -73,14 +73,15 @@ fn write_password_hash(
   password_hash: String,
 ) -> Result(Nil, RegistrationError) {
   let sql = "INSERT INTO password (id, password_hash) VALUES (?, ?)"
-  let r =
+  let result =
     sqlight.query(
       sql,
       on: db_connection,
       with: [sqlight.int(0), sqlight.text(password_hash)],
       expecting: decode.success(Nil),
     )
-  case r {
+
+  case result {
     Ok(_) -> Ok(Nil)
     Error(SqlightError(code: ConstraintPrimarykey, message: _, offset: -1)) ->
       Error(PasswordExists)
