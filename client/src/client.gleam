@@ -13,7 +13,8 @@ import modem
 import effects/auth
 import effects/router
 import model.{
-  type Model, CheckingAuth, FooPage, HomePage, LoggedOut, NotFoundPage,
+  type Model, CheckingAuth, FooPage, HomePage, LogInPage, NotFoundPage,
+  RegisterPage,
 }
 import msg.{
   type Msg, ClientChangedRoute, HomeMsg, LogInMsg, RegisterMsg,
@@ -23,7 +24,7 @@ import page/foo
 import page/home
 import page/log_in
 import page/register
-import route.{Foo, Home, LogIn, LogOut, NotFound, Register}
+import route.{type Route, Foo, Home, LogIn, LogOut, NotFound, Register}
 
 pub fn main() -> Nil {
   let app = lustre.application(init, update, view)
@@ -64,26 +65,23 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
     )
 
     CheckingAuth, LogInMsg(ServerAuthenticatedUser(Error(_))) -> #(
-      model.empty_logged_out_model(LogIn),
+      model.empty_login_page_model(),
       router.navigate_to(LogIn),
     )
 
-    LoggedOut(..), ClientChangedRoute(Register as route)
-    | LoggedOut(..), ClientChangedRoute(LogIn as route)
-    -> #(
-      model.empty_logged_out_model(route),
-      set_title(route.to_page_title(route)),
-    )
+    LogInPage(..), ClientChangedRoute(route) ->
+      handle_login_page_route_change(model, route)
+    LogInPage(..), LogInMsg(msg) -> log_in.update(model, msg)
 
-    LoggedOut(..), ClientChangedRoute(_) -> #(
-      model,
-      router.navigate_to(model.route),
-    )
-
-    LoggedOut(..), LogInMsg(msg) -> log_in.update(model, msg)
-    LoggedOut(..), RegisterMsg(msg) -> register.update(model, msg)
+    RegisterPage(..), ClientChangedRoute(route) ->
+      handle_register_page_route_change(model, route)
+    RegisterPage(..), RegisterMsg(msg) -> register.update(model, msg)
 
     _, ClientChangedRoute(LogOut) -> #(model, auth.send_log_out_request())
+    _, ServerLoggedOutUser(..) -> #(
+      model.empty_login_page_model(),
+      router.navigate_to(LogIn),
+    )
 
     _, ClientChangedRoute(LogIn) | _, ClientChangedRoute(Register) -> #(
       model,
@@ -97,6 +95,7 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
         set_title(route.to_page_title(route)),
       ]),
     )
+    HomePage(..), HomeMsg(msg) -> home.update(model, msg)
 
     _, ClientChangedRoute(Foo as route) -> #(
       FooPage,
@@ -108,13 +107,6 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
       set_title(route.to_page_title(route)),
     )
 
-    _, ServerLoggedOutUser(..) -> #(
-      model.empty_logged_out_model(LogIn),
-      router.navigate_to(LogIn),
-    )
-
-    HomePage(..), HomeMsg(msg) -> home.update(model, msg)
-
     _, _ -> {
       io.println_error(
         "Unhandled model and msg combination: "
@@ -124,6 +116,31 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
       )
       #(model, effect.none())
     }
+  }
+}
+
+fn handle_login_page_route_change(
+  model: Model,
+  target_route: Route,
+) -> #(Model, Effect(Msg)) {
+  case target_route {
+    Register -> #(
+      model.empty_register_page_model(),
+      router.navigate_to(Register),
+    )
+    LogIn -> #(model, set_title(route.to_page_title(LogIn)))
+    _ -> #(model.empty_login_page_model(), router.navigate_to(LogIn))
+  }
+}
+
+fn handle_register_page_route_change(
+  model: Model,
+  target_route: Route,
+) -> #(Model, Effect(Msg)) {
+  case target_route {
+    LogIn -> #(model.empty_login_page_model(), router.navigate_to(LogIn))
+    Register -> #(model, set_title(route.to_page_title(Register)))
+    _ -> #(model.empty_register_page_model(), router.navigate_to(Register))
   }
 }
 
@@ -143,15 +160,10 @@ fn view(model: Model) -> Element(Msg) {
       home.view(items:, new_item:, loading:, saving:, error:)
     FooPage -> foo.view()
     CheckingAuth -> view_loading()
-    LoggedOut(
-      route: Register,
-      password:,
-      show_password:,
-      registration_error:,
-      ..,
-    ) -> register.view(password, show_password, registration_error)
-    LoggedOut(route: LogIn, password:, show_password:, log_in_error:, ..) ->
-      log_in.view(password, show_password, log_in_error)
+    RegisterPage(password:, show_password:, error:, ..) ->
+      register.view(password, show_password, error)
+    LogInPage(password:, show_password:, error:) ->
+      log_in.view(password, show_password, error)
     _ -> view_not_found()
   }
 }

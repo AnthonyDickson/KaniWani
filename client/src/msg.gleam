@@ -5,11 +5,10 @@ import rsvp.{type Error}
 import route.{type Route}
 
 pub type Msg {
-  // Auth flow
+  // Application messages
   ServerLoggedOutUser(Result(Response(String), Error))
-  // Routing
   ClientChangedRoute(new_route: Route)
-  // Page specific messages
+  // Page messages
   HomeMsg(HomeMsg)
   LogInMsg(LogInMsg)
   RegisterMsg(RegisterMsg)
