@@ -13,7 +13,7 @@ import rsvp.{HttpError}
 import api_route.{Token}
 import effects/router
 import error_view
-import model.{type Model, LoggedOut}
+import model.{type Model, LogInPage}
 import msg.{
   type LogInMsg, type Msg, LogInMsg, ServerAuthenticatedUser,
   UserCheckedShowPassword, UserSentLogInForm, UserTypedPassword,
@@ -23,38 +23,35 @@ import route.{Home}
 
 pub fn update(model: Model, msg: LogInMsg) -> #(Model, Effect(Msg)) {
   case model, msg {
-    LoggedOut(..), UserCheckedShowPassword(show_password) -> #(
-      LoggedOut(..model, show_password:),
+    LogInPage(..), UserCheckedShowPassword(show_password) -> #(
+      LogInPage(..model, show_password:),
       effect.none(),
     )
 
-    LoggedOut(..), UserTypedPassword(password) -> #(
-      LoggedOut(..model, password:),
+    LogInPage(..), UserTypedPassword(password) -> #(
+      LogInPage(..model, password:),
       effect.none(),
     )
 
-    LoggedOut(..), UserSentLogInForm -> #(
-      LoggedOut(..model, log_in_error: None, registration_error: None),
+    LogInPage(..), UserSentLogInForm -> #(
+      LogInPage(..model, error: None),
       send_log_in_request(model.password),
     )
 
-    LoggedOut(..), ServerAuthenticatedUser(Ok(_)) -> #(
+    LogInPage(..), ServerAuthenticatedUser(Ok(_)) -> #(
       model.empty_home_page_model(),
       router.navigate_to(Home),
     )
 
-    LoggedOut(..),
+    LogInPage(..),
       ServerAuthenticatedUser(Error(HttpError(Response(status: 404, ..))))
     -> #(
-      LoggedOut(
-        ..model,
-        log_in_error: Some("Please set a password before logging in"),
-      ),
+      LogInPage(..model, error: Some("Please set a password before logging in")),
       effect.none(),
     )
 
-    LoggedOut(..), ServerAuthenticatedUser(Error(_)) -> #(
-      LoggedOut(..model, log_in_error: Some("Login failed")),
+    LogInPage(..), ServerAuthenticatedUser(Error(_)) -> #(
+      LogInPage(..model, error: Some("Login failed")),
       effect.none(),
     )
 

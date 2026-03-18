@@ -4,7 +4,6 @@ import gzxcvbn.{type Feedback, type Options}
 
 import groceries.{type GroceryItem}
 import password
-import route.{type Route}
 
 pub type Model {
   HomePage(
@@ -17,33 +16,39 @@ pub type Model {
   FooPage
   NotFoundPage
   CheckingAuth
-  LoggedOut(
-    route: Route,
-    /// The password entered in the log in or registration form
+  LogInPage(
+    /// The password entered in the log in form
     password: String,
     show_password: Bool,
-    log_in_error: Option(String),
-    registration_error: Option(RegistrationError),
+    error: Option(String),
+  )
+  RegisterPage(
+    /// The password entered in the registration form
+    password: String,
+    show_password: Bool,
+    error: Option(RegistrationError),
     gzxcvbn_options: Options,
   )
 }
 
 pub type RegistrationError {
-  String(String)
-  Feedback(Feedback)
+  RegistrationMessage(String)
+  RegistrationFeedback(Feedback)
 }
 
 pub fn empty_home_page_model() -> Model {
   HomePage(items: [], new_item: "", loading: True, saving: False, error: None)
 }
 
-pub fn empty_logged_out_model(route: Route) -> Model {
-  LoggedOut(
-    route,
+pub fn empty_login_page_model() -> Model {
+  LogInPage(password: "", show_password: False, error: None)
+}
+
+pub fn empty_register_page_model() -> Model {
+  RegisterPage(
     password: "",
     show_password: False,
-    log_in_error: None,
-    registration_error: None,
+    error: None,
     gzxcvbn_options: password.get_gzxcvbn_opts(),
   )
 }

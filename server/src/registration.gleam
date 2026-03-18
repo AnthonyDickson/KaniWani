@@ -25,13 +25,13 @@ pub fn handle_registration(
   use json <- wisp.require_json(req)
 
   let outcome = {
-    use password <- result.try(
+    use raw_password <- result.try(
       decode.run(json, password.password_decoder())
       |> result.replace_error(InvalidJson),
     )
 
     use password <- result.try(
-      password.check_password_strength(password, gzxcvbn_opts)
+      password.check_password_strength(raw_password, gzxcvbn_opts)
       |> result.replace_error(WeakPassword),
     )
 

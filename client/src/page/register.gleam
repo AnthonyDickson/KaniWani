@@ -3,7 +3,7 @@ import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/string
 
-import gzxcvbn
+import gzxcvbn.{Feedback}
 import lustre/attribute
 import lustre/effect.{type Effect}
 import lustre/element.{type Element}
@@ -14,7 +14,10 @@ import rsvp
 import api_route
 import effects/router
 import error_view
-import model.{type Model, type RegistrationError, Feedback, LoggedOut, String}
+import model.{
+  type Model, type RegistrationError, RegisterPage, RegistrationFeedback,
+  RegistrationMessage,
+}
 import msg.{
   type Msg, type RegisterMsg, RegisterMsg, ServerRegisteredUser,
   UserCheckedShowRegisterPassword, UserSentRegistrationForm,
@@ -25,43 +28,40 @@ import route.{LogIn}
 
 pub fn update(model: Model, msg: RegisterMsg) -> #(Model, Effect(Msg)) {
   case model, msg {
-    LoggedOut(..), UserCheckedShowRegisterPassword(show_password) -> #(
-      LoggedOut(..model, show_password:),
+    RegisterPage(..), UserCheckedShowRegisterPassword(show_password) -> #(
+      RegisterPage(..model, show_password:),
       effect.none(),
     )
 
-    LoggedOut(gzxcvbn_options:, ..), UserTypedRegisterPassword(password) -> {
+    RegisterPage(gzxcvbn_options:, ..), UserTypedRegisterPassword(password) -> {
       case password.check_password_strength(password, gzxcvbn_options) {
-        Ok(_) -> #(
-          LoggedOut(..model, password:, registration_error: None),
-          effect.none(),
-        )
+        Ok(_) -> #(RegisterPage(..model, password:, error: None), effect.none())
         Error(feedback) -> #(
-          LoggedOut(
+          RegisterPage(
             ..model,
             password:,
-            registration_error: Some(Feedback(feedback)),
+            error: Some(RegistrationFeedback(feedback)),
           ),
           effect.none(),
         )
       }
     }
 
-    LoggedOut(..), UserSentRegistrationForm -> #(
+    RegisterPage(..), UserSentRegistrationForm -> #(
       model,
       send_registration_request(model.password),
     )
 
-    LoggedOut(..), ServerRegisteredUser(Ok(_)) -> #(
-      model.empty_logged_out_model(LogIn),
+    RegisterPage(..), ServerRegisteredUser(Ok(_)) -> #(
+      model.empty_login_page_model(),
       router.navigate_to(LogIn),
     )
 
-    LoggedOut(..), ServerRegisteredUser(Error(_)) -> #(
-      LoggedOut(
+    RegisterPage(..), ServerRegisteredUser(Error(_)) -> #(
+      RegisterPage(
         ..model,
         password: "",
-        registration_error: Some(String("could not register password")),
+        error: Some(RegistrationMessage("could not register password")),
       ),
       effect.none(),
     )
@@ -110,7 +110,7 @@ pub fn view(
 
   let error_element = case password, error {
     "", _ -> element.none()
-    _, Some(Feedback(gzxcvbn.Feedback(warning:, suggestions:))) ->
+    _, Some(RegistrationFeedback(Feedback(warning:, suggestions:))) ->
       html.div([], [
         html.p([attribute.class("text-red-500")], [
           html.text(warning),
@@ -122,12 +122,13 @@ pub fn view(
           }),
         ),
       ])
-    _, Some(String(message)) -> error_view.view_error_paragraph(Some(message))
+    _, Some(RegistrationMessage(message)) ->
+      error_view.view_error_paragraph(Some(message))
     _, None -> element.none()
   }
 
   let submit_disabled = case password, error {
-    "", _ | _, Some(Feedback(_)) -> True
+    "", _ | _, Some(RegistrationFeedback(_)) -> True
     _, _ -> False
   }
 
@@ -208,6 +209,8 @@ pub fn view(
                 ],
               ),
 
+              error_element,
+
               // Submit button
               html.button(
                 [
@@ -225,8 +228,6 @@ pub fn view(
                 ],
                 [html.text("Register")],
               ),
-
-              error_element,
             ],
           ),
           html.p([], [

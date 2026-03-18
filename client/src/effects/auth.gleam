@@ -17,7 +17,7 @@ pub fn auto_logout(
 ) -> #(Model, Effect(Msg)) {
   case error {
     rsvp.HttpError(resp) if resp.status == 401 -> #(
-      model.empty_logged_out_model(LogIn),
+      model.empty_login_page_model(),
       modem.push(route.to_path_string(LogIn), None, None),
     )
     _ -> callback()
