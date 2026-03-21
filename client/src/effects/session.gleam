@@ -6,7 +6,7 @@ import lustre/effect.{type Effect}
 import modem
 import rsvp.{type Error}
 
-import api_route.{Session, SessionStatus}
+import api_route.{Session}
 import model.{type Model}
 import msg.{type Msg, LogInMsg, ServerAuthenticatedUser, ServerLoggedOutUser}
 import route.{LogIn}
@@ -25,7 +25,7 @@ pub fn auto_logout(
 }
 
 pub fn check_session_status() -> Effect(Msg) {
-  let url = api_route.to_string(SessionStatus)
+  let url = api_route.to_string(Session)
 
   rsvp.get(
     url,

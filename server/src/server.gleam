@@ -2,7 +2,7 @@ import gleam/erlang/process.{type Subject}
 import gleam/http.{Delete, Get, Post}
 import gleam/int
 import gleam/io
-import gleam/option.{Some}
+import gleam/option.{type Option, None, Some}
 import gleam/result
 import gleam/string
 import gleam/time/timestamp.{type Timestamp}
@@ -17,7 +17,7 @@ import sqlight.{type Connection, type Error}
 import wisp.{type Request, type Response}
 import wisp/wisp_mist
 
-import api_route.{Groceries, Register, Session, SessionStatus}
+import api_route.{type ApiRoute, Groceries, Index, Register, Session}
 import grocery
 import log_in
 import password
@@ -93,20 +93,26 @@ fn handle_request(ctx: Context, req: Request) -> Response {
   let now = timestamp.system_time()
   use req <- app_middleware(req, static_directory, session_store, now)
 
-  case wisp.path_segments(req) |> api_route.from_path_segments, req.method {
-    Some(Groceries), Get ->
-      grocery.handle_get_all_groceries(req, db_connection, session_store, now)
-    Some(Groceries), Post ->
-      grocery.handle_save_groceries(req, db_connection, session_store, now)
+  case get_request_path(req), req.method {
+    Some(Index), Get -> serve_index()
+    Some(Index), _ -> wisp.method_not_allowed(allowed: [Get])
+
     Some(Register), Post ->
       registration.handle_registration(req, db_connection, gzxcvbn_opts)
+    Some(Register), _ -> wisp.method_not_allowed(allowed: [Post])
+
+    Some(Session), Get ->
+      session.handle_validate_session_cookie(req, session_store, now)
     Some(Session), Post ->
       log_in.handle_log_in(req, db_connection, session_store, now)
     Some(Session), Delete -> session.handle_delete_session(req, session_store)
-    Some(SessionStatus), Get ->
-      session.handle_validate_session_cookie(req, session_store, now)
-    _, Get -> serve_index()
-    _, _ -> wisp.not_found()
+    Some(Session), _ -> wisp.method_not_allowed(allowed: [Get, Post, Delete])
+
+    Some(Groceries), Get -> grocery.handle_get_all_groceries(db_connection)
+    Some(Groceries), Post -> grocery.handle_save_groceries(req, db_connection)
+    Some(Groceries), _ -> wisp.method_not_allowed(allowed: [Get, Post])
+
+    None, _ -> wisp.not_found()
   }
 }
 
@@ -122,9 +128,26 @@ fn app_middleware(
   use <- wisp.rescue_crashes
   use req <- wisp.handle_head(req)
   use <- wisp.serve_static(req, under: static_file_path, from: static_directory)
+  use <- require_valid_session(req, session_store, now)
   use <- session.extend_session(session_store, req, now)
 
   next(req)
+}
+
+fn require_valid_session(
+  req: Request,
+  session_store: SessionStore,
+  now: Timestamp,
+  next: fn() -> Response,
+) -> Response {
+  case get_request_path(req) {
+    // `None` covers all unrecognised paths.
+    Some(Register) | Some(Session) | Some(Index) | None -> next()
+    _ -> {
+      use <- session.require_valid_session(req, session_store, now)
+      next()
+    }
+  }
 }
 
 fn serve_index() -> Response {
@@ -147,6 +170,10 @@ fn serve_index() -> Response {
   html
   |> element.to_document_string
   |> wisp.html_response(200)
+}
+
+fn get_request_path(req: Request) -> Option(ApiRoute) {
+  wisp.path_segments(req) |> api_route.from_path_segments
 }
 
 // Database -------------------------------------------------------------------
