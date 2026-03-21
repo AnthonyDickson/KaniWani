@@ -14,7 +14,7 @@ import gleam/time/timestamp.{type Timestamp}
 import wisp.{type Request, type Response, Signed}
 import youid/uuid
 
-const auth_token_name = "kaniwani_session"
+const session_cookie_name = "kaniwani_session"
 
 const idle_timeout_minutes: Int = 15
 
@@ -132,7 +132,7 @@ pub fn set_session_cookie(
   set_cookie(
     response:,
     request: req,
-    name: auth_token_name,
+    name: session_cookie_name,
     value: id,
     max_age_seconds:,
   )
@@ -170,7 +170,7 @@ pub fn handle_delete_session(
   session_store: SessionStore,
 ) -> Response {
   delete_session(req, session_store)
-  set_cookie(wisp.no_content(), req, auth_token_name, "", 0)
+  set_cookie(wisp.no_content(), req, session_cookie_name, "", 0)
 }
 
 /// Delete the session corresponding to the session cookie in `req`, if the cookie exists.
@@ -239,7 +239,7 @@ fn has_valid_session_cookie(
 }
 
 fn get_cookie(req: Request) {
-  wisp.get_cookie(req, auth_token_name, Signed) |> option.from_result
+  wisp.get_cookie(req, session_cookie_name, Signed) |> option.from_result
 }
 
 fn set_cookie(

@@ -17,7 +17,7 @@ import sqlight.{type Connection, type Error}
 import wisp.{type Request, type Response}
 import wisp/wisp_mist
 
-import api_route.{Groceries, Register, Token, TokenStatus}
+import api_route.{Groceries, Register, Session, SessionStatus}
 import grocery
 import log_in
 import password
@@ -100,10 +100,10 @@ fn handle_request(ctx: Context, req: Request) -> Response {
       grocery.handle_save_groceries(req, db_connection, session_store, now)
     Some(Register), Post ->
       registration.handle_registration(req, db_connection, gzxcvbn_opts)
-    Some(Token), Post ->
+    Some(Session), Post ->
       log_in.handle_log_in(req, db_connection, session_store, now)
-    Some(Token), Delete -> session.handle_delete_session(req, session_store)
-    Some(TokenStatus), Get ->
+    Some(Session), Delete -> session.handle_delete_session(req, session_store)
+    Some(SessionStatus), Get ->
       session.handle_validate_session_cookie(req, session_store, now)
     _, Get -> serve_index()
     _, _ -> wisp.not_found()

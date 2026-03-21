@@ -27,8 +27,8 @@ pub fn handle_log_in(
 ) -> Response {
   use json <- wisp.require_json(req)
 
-  // Try delete any existing session. This prevent a potential bug where the
-  // user has a token with a valid session.
+  // Try delete any existing session. This prevents a potential bug where the
+  // user has a cookie with a valid session ID.
   // This will log out users, but it is a bug if they got to the login screen
   // while still logged in anyway.
   session.delete_session(req, session_store)

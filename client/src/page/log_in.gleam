@@ -10,7 +10,7 @@ import lustre/element/html
 import lustre/event
 import rsvp.{HttpError}
 
-import api_route.{Token}
+import api_route.{Session}
 import effects/router
 import error_view
 import model.{type Model, LogInPage}
@@ -68,7 +68,7 @@ pub fn update(model: Model, msg: LogInMsg) -> #(Model, Effect(Msg)) {
 }
 
 fn send_log_in_request(password: String) -> Effect(Msg) {
-  let url = api_route.to_string(Token)
+  let url = api_route.to_string(Session)
   let payload = password.password_to_json(password)
 
   rsvp.post(

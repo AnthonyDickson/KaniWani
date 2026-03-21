@@ -6,7 +6,7 @@ import lustre/effect.{type Effect}
 import modem
 import rsvp.{type Error}
 
-import api_route.{Token, TokenStatus}
+import api_route.{Session, SessionStatus}
 import model.{type Model}
 import msg.{type Msg, LogInMsg, ServerAuthenticatedUser, ServerLoggedOutUser}
 import route.{LogIn}
@@ -24,8 +24,8 @@ pub fn auto_logout(
   }
 }
 
-pub fn check_auth_status() -> Effect(Msg) {
-  let url = api_route.to_string(TokenStatus)
+pub fn check_session_status() -> Effect(Msg) {
+  let url = api_route.to_string(SessionStatus)
 
   rsvp.get(
     url,
@@ -45,12 +45,12 @@ pub fn send_log_out_request() -> Effect(Msg) {
   |> request.set_scheme(scheme)
   |> request.set_host(get_host_js())
   |> request.set_method(http.Delete)
-  |> request.set_path(api_route.to_string(Token))
+  |> request.set_path(api_route.to_string(Session))
   |> rsvp.send(rsvp.expect_any_response(ServerLoggedOutUser))
 }
 
-@external(javascript, "./auth.ffi.mjs", "getScheme")
+@external(javascript, "./session.ffi.mjs", "getScheme")
 fn get_scheme_js() -> String
 
-@external(javascript, "./auth.ffi.mjs", "getHost")
+@external(javascript, "./session.ffi.mjs", "getHost")
 fn get_host_js() -> String
