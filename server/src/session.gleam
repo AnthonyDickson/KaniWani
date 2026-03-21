@@ -14,11 +14,13 @@ import gleam/time/timestamp.{type Timestamp}
 import wisp.{type Request, type Response, Signed}
 import youid/uuid
 
-const session_cookie_name = "kaniwani_session"
+const get_session_timeout_ms = 1000
 
 const idle_timeout_minutes: Int = 15
 
 const max_session_age_hours: Int = 24
+
+const session_cookie_name = "kaniwani_session"
 
 const status_unauthorised = 401
 
@@ -105,7 +107,10 @@ pub fn create(session_store: SessionStore, issued_at now: Timestamp) -> Session 
 }
 
 fn get(session_store: SessionStore, id: SessionId) -> Option(Session) {
-  process.call(session_store, waiting: 10, sending: Get(_, id))
+  process.call(session_store, waiting: get_session_timeout_ms, sending: Get(
+    _,
+    id,
+  ))
 }
 
 fn set(session_store: SessionStore, session: Session) -> Nil {
