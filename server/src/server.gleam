@@ -122,7 +122,7 @@ fn app_middleware(
   use <- wisp.rescue_crashes
   use req <- wisp.handle_head(req)
   use <- wisp.serve_static(req, under: static_file_path, from: static_directory)
-  use <- session.extend_cookie(session_store, req, now)
+  use <- session.extend_session(session_store, req, now)
 
   next(req)
 }

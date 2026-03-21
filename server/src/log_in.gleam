@@ -27,12 +27,6 @@ pub fn handle_log_in(
 ) -> Response {
   use json <- wisp.require_json(req)
 
-  // Try delete any existing session. This prevents a potential bug where the
-  // user has a cookie with a valid session ID.
-  // This will log out users, but it is a bug if they got to the login screen
-  // while still logged in anyway.
-  session.delete_session(req, session_store)
-
   let password_verification_result = {
     use password <- result.try(
       decode.run(json, password.password_decoder())
@@ -45,7 +39,7 @@ pub fn handle_log_in(
   case password_verification_result {
     Ok(True) -> {
       session.create(session_store, issued_at: now)
-      |> session.set_session_cookie(req, wisp.no_content(), now)
+      |> session.set_session_cookie(req, wisp.no_content())
     }
     Ok(False) -> wisp.response(status_unauthorised)
     Error(PasswordNotSet) -> wisp.not_found()
