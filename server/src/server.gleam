@@ -1,8 +1,11 @@
-import gleam/erlang/process
+import gleam/erlang/process.{type Subject}
 import gleam/http.{Delete, Get, Post}
 import gleam/int
+import gleam/io
 import gleam/option.{Some}
 import gleam/result
+import gleam/string
+import gleam/time/timestamp.{type Timestamp}
 
 import envoy
 import gzxcvbn.{type Options}
@@ -14,12 +17,12 @@ import sqlight.{type Connection, type Error}
 import wisp.{type Request, type Response}
 import wisp/wisp_mist
 
-import api_route.{Groceries, Register, Token, TokenStatus}
+import api_route.{Groceries, Register, Session, SessionStatus}
 import grocery
 import log_in
 import password
 import registration
-import token
+import session.{type Message, type SessionStore}
 
 const static_file_path = "/static"
 
@@ -30,6 +33,7 @@ const css_bundle_path = static_file_path <> "/client.css"
 type Context {
   Context(
     db_connection: Connection,
+    session_store: Subject(Message),
     static_directory: String,
     gzxcvbn_opts: Options,
   )
@@ -42,15 +46,19 @@ pub fn main() -> Nil {
   let host = envoy.get("HOST") |> result.unwrap("localhost")
   let port = envoy.get("PORT") |> result.try(int.parse) |> result.unwrap(3000)
 
+  use session_store <- require_session_store()
+
   use db_connection <- sqlight.with_connection(database_path)
   let assert Ok(Nil) = setup_database(db_connection)
 
   let assert Ok(priv_directory) = wisp.priv_directory("server")
   let static_directory = priv_directory <> "/static"
+
   let ctx =
     Context(
       db_connection:,
       static_directory:,
+      session_store:,
       gzxcvbn_opts: password.get_gzxcvbn_opts(),
     )
 
@@ -65,21 +73,39 @@ pub fn main() -> Nil {
   process.sleep_forever()
 }
 
+fn require_session_store(next: fn(SessionStore) -> Nil) {
+  case session.start_store() {
+    Ok(actor) -> next(actor.data)
+    Error(error) -> {
+      io.println_error(
+        "Could not start session store: " <> string.inspect(error),
+      )
+      Nil
+    }
+  }
+}
+
 // Request Handlers -----------------------------------------------------------
 
 fn handle_request(ctx: Context, req: Request) -> Response {
-  let Context(db_connection:, static_directory:, gzxcvbn_opts:) = ctx
-  use req <- app_middleware(req, static_directory)
+  let Context(db_connection:, session_store:, static_directory:, gzxcvbn_opts:) =
+    ctx
+  let now = timestamp.system_time()
+  use req <- app_middleware(req, static_directory, session_store, now)
 
-  case req.method, wisp.path_segments(req) |> api_route.from_path_segments {
-    Get, Some(Groceries) -> grocery.handle_get_all_groceries(req, db_connection)
-    Post, Some(Groceries) -> grocery.handle_save_groceries(req, db_connection)
-    Post, Some(Register) ->
+  case wisp.path_segments(req) |> api_route.from_path_segments, req.method {
+    Some(Groceries), Get ->
+      grocery.handle_get_all_groceries(req, db_connection, session_store, now)
+    Some(Groceries), Post ->
+      grocery.handle_save_groceries(req, db_connection, session_store, now)
+    Some(Register), Post ->
       registration.handle_registration(req, db_connection, gzxcvbn_opts)
-    Post, Some(Token) -> log_in.handle_log_in(req, db_connection)
-    Delete, Some(Token) -> token.handle_delete_token(req)
-    Get, Some(TokenStatus) -> token.handle_validate_token(req)
-    Get, _ -> serve_index()
+    Some(Session), Post ->
+      log_in.handle_log_in(req, db_connection, session_store, now)
+    Some(Session), Delete -> session.handle_delete_session(req, session_store)
+    Some(SessionStatus), Get ->
+      session.handle_validate_session_cookie(req, session_store, now)
+    _, Get -> serve_index()
     _, _ -> wisp.not_found()
   }
 }
@@ -87,6 +113,8 @@ fn handle_request(ctx: Context, req: Request) -> Response {
 fn app_middleware(
   req: Request,
   static_directory: String,
+  session_store: SessionStore,
+  now: Timestamp,
   next: fn(Request) -> Response,
 ) -> Response {
   let req = wisp.method_override(req)
@@ -94,6 +122,7 @@ fn app_middleware(
   use <- wisp.rescue_crashes
   use req <- wisp.handle_head(req)
   use <- wisp.serve_static(req, under: static_file_path, from: static_directory)
+  use <- session.extend_session(session_store, req, now)
 
   next(req)
 }

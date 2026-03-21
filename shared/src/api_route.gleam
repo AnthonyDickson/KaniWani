@@ -4,18 +4,16 @@ import gleam/string
 pub type ApiRoute {
   Groceries
   Register
-  Token
-  TokenStatus
+  Session
+  SessionStatus
 }
-
-pub const auth_status = ["api", "auth", "status"]
 
 pub fn from_path_segments(path: List(String)) -> option.Option(ApiRoute) {
   case path {
     ["api", "groceries"] -> Some(Groceries)
     ["api", "register"] -> Some(Register)
-    ["api", "token"] -> Some(Token)
-    ["api", "token", "status"] -> Some(TokenStatus)
+    ["api", "session"] -> Some(Session)
+    ["api", "session", "status"] -> Some(SessionStatus)
     _ -> None
   }
 }
@@ -24,8 +22,8 @@ pub fn to_path_segments(route: ApiRoute) -> List(String) {
   let path = case route {
     Groceries -> ["groceries"]
     Register -> ["register"]
-    Token -> ["token"]
-    TokenStatus -> ["token", "status"]
+    Session -> ["session"]
+    SessionStatus -> ["session", "status"]
   }
 
   ["api", ..path]

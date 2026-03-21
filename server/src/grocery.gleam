@@ -3,12 +3,13 @@ import gleam/json
 import gleam/list
 import gleam/result
 import gleam/string
+import gleam/time/timestamp.{type Timestamp}
 
 import sqlight.{type Connection, type Error}
 import wisp.{type Request, type Response}
 
 import groceries.{type GroceryItem, GroceryItem}
-import token
+import session.{type SessionStore}
 
 type SaveGroceriesError {
   DecodeError(List(decode.DecodeError))
@@ -18,8 +19,10 @@ type SaveGroceriesError {
 pub fn handle_save_groceries(
   req: Request,
   db_connection: Connection,
+  session_store: SessionStore,
+  now: Timestamp,
 ) -> Response {
-  use <- token.require_valid_token(req)
+  use <- session.require_valid_session_cookie(req, session_store, now)
   use json <- wisp.require_json(req)
 
   let outcome = {
@@ -40,8 +43,10 @@ pub fn handle_save_groceries(
 pub fn handle_get_all_groceries(
   req: Request,
   db_connection: Connection,
+  session_store: SessionStore,
+  now: Timestamp,
 ) -> Response {
-  use <- token.require_valid_token(req)
+  use <- session.require_valid_session_cookie(req, session_store, now)
   case read_grocery_items(db_connection) {
     Ok(grocery_list) -> {
       wisp.json_response(

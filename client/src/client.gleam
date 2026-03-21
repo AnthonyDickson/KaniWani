@@ -10,8 +10,8 @@ import lustre/element.{type Element}
 import lustre/element/html
 import modem
 
-import effects/auth
 import effects/router
+import effects/session
 import model.{
   type Model, CheckingAuth, FooPage, HomePage, LogInPage, NotFoundPage,
   RegisterPage,
@@ -46,7 +46,7 @@ fn init(_: Nil) -> #(Model, Effect(Msg)) {
     effect.batch([
       modem.init(on_url_change),
       set_title(route.to_page_title(route)),
-      auth.check_auth_status(),
+      session.check_session_status(),
     ]),
   )
 }
@@ -77,7 +77,7 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
       handle_register_page_route_change(model, route)
     RegisterPage(..), RegisterMsg(msg) -> register.update(model, msg)
 
-    _, ClientChangedRoute(LogOut) -> #(model, auth.send_log_out_request())
+    _, ClientChangedRoute(LogOut) -> #(model, session.send_log_out_request())
     _, ServerLoggedOutUser(..) -> #(
       model.empty_login_page_model(),
       router.navigate_to(LogIn),

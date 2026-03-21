@@ -1,13 +1,14 @@
 import gleam/dynamic/decode.{type DecodeError}
 import gleam/result
 import gleam/string
+import gleam/time/timestamp.{type Timestamp}
 
 import argus.{type HashError}
 import sqlight.{type Connection, type Error as SqlightError}
 import wisp.{type Request, type Response}
 
 import password
-import token
+import session.{type SessionStore}
 
 const status_unauthorised = 401
 
@@ -18,9 +19,15 @@ type LogInError {
   PasswordNotSet
 }
 
-pub fn handle_log_in(req: Request, db_connection: Connection) -> Response {
+pub fn handle_log_in(
+  req: Request,
+  db_connection: Connection,
+  session_store: SessionStore,
+  now: Timestamp,
+) -> Response {
   use json <- wisp.require_json(req)
-  let outcome = {
+
+  let password_verification_result = {
     use password <- result.try(
       decode.run(json, password.password_decoder())
       |> result.map_error(DecodeError),
@@ -29,8 +36,11 @@ pub fn handle_log_in(req: Request, db_connection: Connection) -> Response {
     argus.verify(password_hash, password) |> result.map_error(HashingError)
   }
 
-  case outcome {
-    Ok(True) -> token.new() |> token.to_response(req)
+  case password_verification_result {
+    Ok(True) -> {
+      session.create(session_store, issued_at: now)
+      |> session.set_session_cookie(req, wisp.no_content())
+    }
     Ok(False) -> wisp.response(status_unauthorised)
     Error(PasswordNotSet) -> wisp.not_found()
     Error(error) -> {

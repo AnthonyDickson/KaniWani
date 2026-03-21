@@ -14,7 +14,7 @@ import lustre/event
 import rsvp
 
 import api_route.{Groceries}
-import effects/auth
+import effects/session
 import error_view
 import groceries.{type GroceryItem, GroceryItem}
 import json_helpers
@@ -47,7 +47,7 @@ pub fn update(model: Model, msg: HomeMsg) -> #(Model, Effect(Msg)) {
     }
 
     HomePage(..), ServerLoadedList(Error(error)) -> {
-      use <- auth.auto_logout(error)
+      use <- session.auto_logout(error)
       #(
         HomePage(
           ..model,
@@ -70,7 +70,7 @@ pub fn update(model: Model, msg: HomeMsg) -> #(Model, Effect(Msg)) {
     )
 
     HomePage(..), ServerSavedList(Error(error)) -> {
-      use <- auth.auto_logout(error)
+      use <- session.auto_logout(error)
       #(
         HomePage(..model, saving: False, error: Some("Failed to save list")),
         effect.none(),
