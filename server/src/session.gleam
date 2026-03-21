@@ -1,6 +1,6 @@
 import gleam/bool
 import gleam/crypto
-import gleam/dict
+import gleam/dict.{type Dict}
 import gleam/erlang/process.{type Subject}
 import gleam/float
 import gleam/http/cookie
@@ -14,9 +14,13 @@ import gleam/time/timestamp.{type Timestamp}
 import wisp.{type Request, type Response, Signed}
 import youid/uuid
 
+const cleanup_sessions_interval_ms = 60_000
+
 const get_session_timeout_ms = 1000
 
 const idle_timeout_minutes: Int = 15
+
+const init_session_store_timeout_ms = 1000
 
 const max_session_age_hours: Int = 24
 
@@ -71,27 +75,64 @@ pub opaque type Message {
   Set(Session)
   Get(reply_with: Subject(Option(Session)), id: SessionId)
   Delete(SessionId)
+  ClearExpiredSessions
 }
 
-type State =
-  dict.Dict(SessionId, Session)
+type State {
+  State(self: SessionStore, sessions: Dict(SessionId, Session))
+}
 
 fn handle_message(state: State, message: Message) -> Next(State, Message) {
+  let State(self:, sessions:) = state
+
   case message {
     Set(session) ->
-      actor.continue(dict.insert(into: state, for: session.id, insert: session))
+      actor.continue(State(
+        self:,
+        sessions: dict.insert(into: sessions, for: session.id, insert: session),
+      ))
 
     Get(reply_with: client, id:) -> {
-      process.send(client, dict.get(state, id) |> option.from_result)
+      process.send(client, dict.get(sessions, id) |> option.from_result)
       actor.continue(state)
     }
 
-    Delete(id) -> actor.continue(dict.delete(from: state, delete: id))
+    Delete(id) ->
+      actor.continue(State(
+        self:,
+        sessions: dict.delete(from: sessions, delete: id),
+      ))
+    ClearExpiredSessions -> {
+      process.send_after(
+        self,
+        cleanup_sessions_interval_ms,
+        ClearExpiredSessions,
+      )
+
+      let now = timestamp.system_time()
+
+      actor.continue(State(
+        self:,
+        sessions: dict.filter(sessions, keeping: fn(_id, session) {
+          !is_expired(session, now)
+        }),
+      ))
+    }
   }
 }
 
 pub fn start_store() {
-  actor.new(dict.new()) |> actor.on_message(handle_message) |> actor.start
+  actor.new_with_initialiser(init_session_store_timeout_ms, fn(self) {
+    process.send_after(self, cleanup_sessions_interval_ms, ClearExpiredSessions)
+    let initial_state = State(self:, sessions: dict.new())
+
+    Ok(
+      actor.initialised(initial_state)
+      |> actor.returning(self),
+    )
+  })
+  |> actor.on_message(handle_message)
+  |> actor.start
 }
 
 /// Create a session starting at the given timestamp and add it to the session store
@@ -141,6 +182,13 @@ pub fn set_session_cookie(
     value: id,
     max_age_seconds:,
   )
+}
+
+fn to_non_negative_int(number: Int) -> Int {
+  case number {
+    _ if number > 0 -> number
+    _ -> 0
+  }
 }
 
 pub fn require_valid_session_cookie(
@@ -234,7 +282,12 @@ fn has_valid_session_cookie(
 ) -> Bool {
   case get_cookie(req) {
     Some(session_id) -> {
-      case process.call(session_store, 10, Get(_, id: session_id)) {
+      case
+        process.call(session_store, get_session_timeout_ms, Get(
+          _,
+          id: session_id,
+        ))
+      {
         Some(session) -> !is_expired(session, now)
         None -> False
       }
@@ -266,11 +319,4 @@ fn set_cookie(
   let value = wisp.sign_message(request, <<value:utf8>>, crypto.Sha512)
 
   response.set_cookie(response_, name, value, attributes)
-}
-
-fn to_non_negative_int(number: Int) -> Int {
-  case number {
-    _ if number > 0 -> number
-    _ -> 0
-  }
 }
