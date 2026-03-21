@@ -178,7 +178,7 @@ pub fn set_session_cookie(
   )
 }
 
-pub fn require_valid_session_cookie(
+pub fn require_valid_session(
   req: Request,
   session_store: SessionStore,
   now: Timestamp,
