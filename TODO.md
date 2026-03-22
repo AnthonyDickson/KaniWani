@@ -1,7 +1,10 @@
-# To Do
+# TODO
 
-- Display toast or alert for errors on API calls, especially in 500 range
-- Look into using https://github.com/kanidm/kanidm and https://github.com/fweingartshofer/oauth for OAuth 2.0
+- Plan out reviews and SRS system
+- Plan out basic dashboard
+- Implement basic lessons
+- Implement basic reviews
+- Factor out common component styles
 
 ## Nice to haves
 
@@ -12,3 +15,7 @@
   - If going for a recursive implementation, use [rememo_javascript](https://github.com/hunkyjimpjorps/rememo_javascript)
     for the frontend or [rememo_erlang](https://github.com/hunkyjimpjorps/rememo_erlang) for the backend.
   - Simpler alternative for checking equal length strings: [Hamming distance](https://en.wikipedia.org/wiki/Hamming_distance)
+- Display toast or alert for errors on API calls, especially in 500 range
+- Common phases lessons
+- Grammar lessons
+- Look into using https://github.com/kanidm/kanidm and https://github.com/fweingartshofer/oauth for OAuth 2.0
