@@ -1,6 +1,5 @@
 # TODO
 
-- Plan out reviews and SRS system
 - Plan out basic dashboard
 - Implement basic lessons
 - Implement basic reviews
