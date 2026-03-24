@@ -29,3 +29,7 @@ and then run the server with:
 ```shell
 docker compose up
 ```
+
+## Attribution
+
+HSK vocabulary lists are from <https://github.com/glxxyz/hskhsk.com>
