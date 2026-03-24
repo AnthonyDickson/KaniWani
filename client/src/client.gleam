@@ -14,17 +14,15 @@ import effects/router
 import effects/session
 import model.{
   type Model, CheckingAuth, FooPage, HomePage, LogInPage, NotFoundPage,
-  RegisterPage,
 }
 import msg.{
-  type Msg, ClientChangedRoute, HomeMsg, LogInMsg, RegisterMsg,
-  ServerAuthenticatedUser, ServerLoggedOutUser, UserNavigatedToHomePage,
+  type Msg, ClientChangedRoute, HomeMsg, LogInMsg, ServerAuthenticatedUser,
+  ServerLoggedOutUser, UserNavigatedToHomePage,
 }
 import page/foo
 import page/home
 import page/log_in
-import page/register
-import route.{type Route, Foo, Home, LogIn, LogOut, NotFound, Register}
+import route.{type Route, Foo, Home, LogIn, LogOut, NotFound}
 
 pub fn main() -> Nil {
   let app = lustre.application(init, update, view)
@@ -73,20 +71,13 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
       handle_login_page_route_change(model, route)
     LogInPage(..), LogInMsg(msg) -> log_in.update(model, msg)
 
-    RegisterPage(..), ClientChangedRoute(route) ->
-      handle_register_page_route_change(model, route)
-    RegisterPage(..), RegisterMsg(msg) -> register.update(model, msg)
-
     _, ClientChangedRoute(LogOut) -> #(model, session.send_log_out_request())
     _, ServerLoggedOutUser(..) -> #(
       model.empty_login_page_model(),
       router.navigate_to(LogIn),
     )
 
-    _, ClientChangedRoute(LogIn) | _, ClientChangedRoute(Register) -> #(
-      model,
-      modem.back(1),
-    )
+    _, ClientChangedRoute(LogIn) -> #(model, modem.back(1))
 
     _, ClientChangedRoute(Home as route) -> #(
       model.empty_home_page_model(),
@@ -124,23 +115,8 @@ fn handle_login_page_route_change(
   target_route: Route,
 ) -> #(Model, Effect(Msg)) {
   case target_route {
-    Register -> #(
-      model.empty_register_page_model(),
-      router.navigate_to(Register),
-    )
     LogIn -> #(model, set_title(route.to_page_title(LogIn)))
     _ -> #(model.empty_login_page_model(), router.navigate_to(LogIn))
-  }
-}
-
-fn handle_register_page_route_change(
-  model: Model,
-  target_route: Route,
-) -> #(Model, Effect(Msg)) {
-  case target_route {
-    LogIn -> #(model.empty_login_page_model(), router.navigate_to(LogIn))
-    Register -> #(model, set_title(route.to_page_title(Register)))
-    _ -> #(model.empty_register_page_model(), router.navigate_to(Register))
   }
 }
 
@@ -160,8 +136,6 @@ fn view(model: Model) -> Element(Msg) {
       home.view(items:, new_item:, loading:, saving:, error:)
     FooPage -> foo.view()
     CheckingAuth -> view_loading()
-    RegisterPage(password:, show_password:, error:, ..) ->
-      register.view(password, show_password, error)
     LogInPage(password:, show_password:, error:) ->
       log_in.view(password, show_password, error)
     _ -> view_not_found()

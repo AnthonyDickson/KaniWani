@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        subproject: [shared, server, client]
+        subproject: [shared, server, client, cli]
     steps:
       - uses: actions/checkout@v4
       - uses: erlef/setup-beam@v1

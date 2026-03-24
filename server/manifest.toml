@@ -49,9 +49,6 @@ gleam_otp = { version = ">= 1.2.0 and < 2.0.0" }
 gleam_stdlib = { version = ">= 0.44.0 and < 2.0.0" }
 gleam_time = { version = ">= 1.6.0 and < 2.0.0" }
 gleeunit = { version = ">= 1.0.0 and < 2.0.0" }
-gzxcvbn = { version = ">= 1.0.0 and < 2.0.0" }
-gzxcvbn_common = { version = ">= 1.0.0 and < 2.0.0" }
-gzxcvbn_en = { version = ">= 1.0.0 and < 2.0.0" }
 lustre = { version = ">= 5.4.0 and < 6.0.0" }
 mist = { version = ">= 5.0.3 and < 6.0.0" }
 shared = { path = "../shared" }
