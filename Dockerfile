@@ -7,14 +7,20 @@ FROM ghcr.io/gleam-lang/gleam:${GLEAM_VERSION}-erlang-alpine AS builder
 RUN apk add --no-cache build-base
 
 # Add project code
+COPY ./cli /build/cli
 COPY ./shared /build/shared
 COPY ./client /build/client
 COPY ./server /build/server
 
 # Install dependencies for all projects
+RUN cd /build/cli && gleam deps download
 RUN cd /build/shared && gleam deps download
 RUN cd /build/client && gleam deps download
 RUN cd /build/server && gleam deps download
+
+# Compile the CLI code
+RUN cd /build/cli \
+  && gleam export erlang-shipment
 
 # Compile the client code and output to server's static directory
 RUN cd /build/client \
@@ -27,24 +33,37 @@ RUN cd /build/client \
 RUN cd /build/server \
   && gleam export erlang-shipment
 
+#==============================================================================#
+
 # Runtime stage - slim image with only what's needed to run
 FROM ghcr.io/gleam-lang/gleam:${GLEAM_VERSION}-erlang-alpine
+
+## Setup the CLI
+WORKDIR /cli
+COPY --from=builder /build/cli/build/erlang-shipment /cli
+COPY ./sql /cli/sql
+
+# Set up the entrypoint
+RUN echo -e '#!/bin/sh\nexec ./entrypoint.sh "$@"' > ./start.sh \
+  && chmod +x ./start.sh
+
+## Setup the server
+WORKDIR /app
+
+# Set environment variables
+ENV HOST=0.0.0.0
+ENV PORT=8080
+ENV DATABASE_PATH=/app/data/kaniwani.sqlite3
+
+# Expose the port the server will run on
+EXPOSE $PORT
 
 # Copy the compiled server code from the builder stage
 COPY --from=builder /build/server/build/erlang-shipment /app
 
 # Set up the entrypoint
-WORKDIR /app
 RUN echo -e '#!/bin/sh\nexec ./entrypoint.sh "$@"' > ./start.sh \
   && chmod +x ./start.sh
-
-# Set environment variables
-ENV HOST=0.0.0.0
-ENV PORT=8080
-ENV DATABASE_PATH=/app/data/kaniwani.db
-
-# Expose the port the server will run on
-EXPOSE $PORT
 
 # Run the server
 CMD ["./start.sh", "run"]

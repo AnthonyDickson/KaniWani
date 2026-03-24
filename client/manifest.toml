@@ -27,9 +27,6 @@ packages = [
   { name = "glisten", version = "8.0.1", build_tools = ["gleam"], requirements = ["gleam_erlang", "gleam_otp", "gleam_stdlib", "logging", "telemetry"], otp_app = "glisten", source = "hex", outer_checksum = "534BB27C71FB9E506345A767C0D76B17A9E9199934340C975DC003C710E3692D" },
   { name = "gramps", version = "6.0.0", build_tools = ["gleam"], requirements = ["gleam_crypto", "gleam_erlang", "gleam_http", "gleam_stdlib"], otp_app = "gramps", source = "hex", outer_checksum = "8B7195978FBFD30B43DF791A8A272041B81E45D245314D7A41FC57237AA882A0" },
   { name = "group_registry", version = "1.0.0", build_tools = ["gleam"], requirements = ["gleam_erlang", "gleam_otp", "gleam_stdlib"], otp_app = "group_registry", source = "hex", outer_checksum = "BC798A53D6F2406DB94E27CB45C57052CB56B32ACF7CC16EA20F6BAEC7E36B90" },
-  { name = "gzxcvbn", version = "1.0.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "gzxcvbn", source = "hex", outer_checksum = "221BB82064DF9ABEBB467643A59C01C139F57B3F84027C5F6E661CA5E6A6CB4B" },
-  { name = "gzxcvbn_common", version = "1.0.0", build_tools = ["gleam"], requirements = ["gleam_stdlib", "gzxcvbn"], otp_app = "gzxcvbn_common", source = "hex", outer_checksum = "0A9F7317EB0940A7211691159DC435DE7135EE9F91CB10ED80C8A252F80CC20A" },
-  { name = "gzxcvbn_en", version = "1.0.0", build_tools = ["gleam"], requirements = ["gleam_stdlib", "gzxcvbn"], otp_app = "gzxcvbn_en", source = "hex", outer_checksum = "2924883551C5155689CB22A1AAC0EE5175B9C6637F2D3320C0545DE3E84C50B2" },
   { name = "houdini", version = "1.2.0", build_tools = ["gleam"], requirements = [], otp_app = "houdini", source = "hex", outer_checksum = "5DB1053F1AF828049C2B206D4403C18970ABEF5C18671CA3C2D2ED0DD64F6385" },
   { name = "hpack_erl", version = "0.3.0", build_tools = ["rebar3"], requirements = [], otp_app = "hpack", source = "hex", outer_checksum = "D6137D7079169D8C485C6962DFE261AF5B9EF60FBC557344511C1E65E3D95FB0" },
   { name = "justin", version = "1.0.1", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "justin", source = "hex", outer_checksum = "7FA0C6DB78640C6DC5FBFD59BF3456009F3F8B485BF6825E97E1EB44E9A1E2CD" },
@@ -56,9 +53,6 @@ gleam_http = { version = ">= 4.3.0 and < 5.0.0" }
 gleam_json = { version = ">= 3.1.0 and < 4.0.0" }
 gleam_stdlib = { version = ">= 0.44.0 and < 2.0.0" }
 gleeunit = { version = ">= 1.0.0 and < 2.0.0" }
-gzxcvbn = { version = ">= 1.0.0 and < 2.0.0" }
-gzxcvbn_common = { version = ">= 1.0.0 and < 2.0.0" }
-gzxcvbn_en = { version = ">= 1.0.0 and < 2.0.0" }
 lustre = { version = ">= 5.4.0 and < 6.0.0" }
 lustre_dev_tools = { version = ">= 2.3.1 and < 3.0.0" }
 modem = { version = ">= 2.1.2 and < 3.0.0" }

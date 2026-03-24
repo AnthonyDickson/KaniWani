@@ -8,7 +8,6 @@ import gleam/string
 import gleam/time/timestamp.{type Timestamp}
 
 import envoy
-import gzxcvbn.{type Options}
 import lustre/attribute
 import lustre/element
 import lustre/element/html
@@ -17,11 +16,9 @@ import sqlight.{type Connection, type Error}
 import wisp.{type Request, type Response}
 import wisp/wisp_mist
 
-import api_route.{type ApiRoute, Groceries, Index, Register, Session}
+import api_route.{type ApiRoute, Groceries, Index, Session}
 import grocery
 import log_in
-import password
-import registration
 import session.{type Message, type SessionStore}
 
 const static_file_path = "/static"
@@ -35,7 +32,6 @@ type Context {
     db_connection: Connection,
     session_store: Subject(Message),
     static_directory: String,
-    gzxcvbn_opts: Options,
   )
 }
 
@@ -54,13 +50,7 @@ pub fn main() -> Nil {
   let assert Ok(priv_directory) = wisp.priv_directory("server")
   let static_directory = priv_directory <> "/static"
 
-  let ctx =
-    Context(
-      db_connection:,
-      static_directory:,
-      session_store:,
-      gzxcvbn_opts: password.get_gzxcvbn_opts(),
-    )
+  let ctx = Context(db_connection:, static_directory:, session_store:)
 
   let assert Ok(_) =
     handle_request(ctx, _)
@@ -88,18 +78,13 @@ fn require_session_store(next: fn(SessionStore) -> Nil) {
 // Request Handlers -----------------------------------------------------------
 
 fn handle_request(ctx: Context, req: Request) -> Response {
-  let Context(db_connection:, session_store:, static_directory:, gzxcvbn_opts:) =
-    ctx
+  let Context(db_connection:, session_store:, static_directory:) = ctx
   let now = timestamp.system_time()
   use req <- app_middleware(req, static_directory, session_store, now)
 
   case get_request_path(req), req.method {
     Some(Index), Get -> serve_index()
     Some(Index), _ -> wisp.method_not_allowed(allowed: [Get])
-
-    Some(Register), Post ->
-      registration.handle_registration(req, db_connection, gzxcvbn_opts)
-    Some(Register), _ -> wisp.method_not_allowed(allowed: [Post])
 
     Some(Session), Get ->
       session.handle_validate_session_cookie(req, session_store, now)
@@ -142,7 +127,7 @@ fn require_valid_session(
 ) -> Response {
   case get_request_path(req) {
     // `None` covers all unrecognised paths.
-    Some(Register) | Some(Session) | Some(Index) | None -> next()
+    Some(Session) | Some(Index) | None -> next()
     _ -> {
       use <- session.require_valid_session(req, session_store, now)
       next()

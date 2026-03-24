@@ -21,6 +21,8 @@ import msg.{
 import password
 import route.{Home}
 
+const docs_url = "https://github.com/AnthonyDickson/KaniWani/blob/main/README.md"
+
 pub fn update(model: Model, msg: LogInMsg) -> #(Model, Effect(Msg)) {
   case model, msg {
     LogInPage(..), UserCheckedShowPassword(show_password) -> #(
@@ -183,16 +185,17 @@ pub fn view(
             ],
           ),
           html.p([], [
-            html.text("Don't have a password yet? "),
+            html.text("Don't have a password yet? Check "),
             html.a(
               [
-                attribute.href(route.to_path_string(route.Register)),
+                attribute.href(docs_url),
                 attribute.class("text-blue-500"),
               ],
               [
-                html.text("Register here"),
+                html.text("README.md"),
               ],
             ),
+            html.text(" on how to set your password."),
           ]),
         ],
       ),

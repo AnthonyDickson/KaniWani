@@ -5,7 +5,6 @@ pub type Route {
   Foo
   LogIn
   LogOut
-  Register
   NotFound
 }
 
@@ -15,7 +14,6 @@ pub fn from_uri(uri: Uri) -> Route {
     ["foo"] -> Foo
     ["log_in"] -> LogIn
     ["log_out"] -> LogOut
-    ["register"] -> Register
     _ -> NotFound
   }
 }
@@ -30,7 +28,6 @@ pub fn to_page_name(route: Route) -> String {
     Foo -> "Foo"
     LogIn -> "Log In"
     LogOut -> "Log Out"
-    Register -> "Register"
     NotFound -> "Page Not Found"
   }
 }
@@ -41,7 +38,6 @@ pub fn to_path_string(route: Route) -> String {
     Foo -> "/foo"
     LogIn -> "/log_in"
     LogOut -> "/log_out"
-    Register -> "/register"
     NotFound -> "#"
   }
 }

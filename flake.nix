@@ -21,6 +21,7 @@
               beam28Packages.erlang
               rebar3 # required for Lustre
               dprint # For formatting markdown
+              sqlite # For managing the test database
               gnumake
               watchexec
             ];
