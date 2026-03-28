@@ -3,6 +3,7 @@
 - Plan out basic dashboard
 - Implement basic lessons
 - Implement basic reviews
+- Add a GitHub action that builds the Docker image and makes a release
 - Factor out common component styles
 
 ## Nice to haves
