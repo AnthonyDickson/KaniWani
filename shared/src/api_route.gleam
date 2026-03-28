@@ -1,11 +1,12 @@
 import gleam/option.{None, Some}
-import gleam/string
 
 pub type ApiRoute {
   Index
   Groceries
   Register
   Session
+  OAuthLogin
+  OAuthCallback
 }
 
 pub fn from_path_segments(path: List(String)) -> option.Option(ApiRoute) {
@@ -14,22 +15,19 @@ pub fn from_path_segments(path: List(String)) -> option.Option(ApiRoute) {
     ["api", "groceries"] -> Some(Groceries)
     ["api", "register"] -> Some(Register)
     ["api", "session"] -> Some(Session)
+    ["api", "oauth", "login"] -> Some(OAuthLogin)
+    ["api", "oauth", "callback"] -> Some(OAuthCallback)
     _ -> None
   }
 }
 
-pub fn to_path_segments(route: ApiRoute) -> List(String) {
-  case route {
-    Index -> []
-    Groceries -> ["api", "groceries"]
-    Register -> ["api", "register"]
-    Session -> ["api", "session"]
-  }
-}
-
 pub fn to_string(route: ApiRoute) -> String {
-  "/"
-  <> route
-  |> to_path_segments
-  |> string.join("/")
+  case route {
+    Index -> "/"
+    Groceries -> "/api/groceries"
+    Register -> "/api/register"
+    Session -> "/api/session"
+    OAuthLogin -> "/api/oauth/login"
+    OAuthCallback -> "/api/oauth/callback"
+  }
 }

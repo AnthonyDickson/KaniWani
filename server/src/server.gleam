@@ -17,7 +17,9 @@ import sqlight.{type Connection, type Error}
 import wisp.{type Request, type Response}
 import wisp/wisp_mist
 
-import api_route.{type ApiRoute, Groceries, Index, Register, Session}
+import api_route.{
+  type ApiRoute, Groceries, Index, OAuthCallback, OAuthLogin, Register, Session,
+}
 import grocery
 import log_in
 import password
@@ -108,6 +110,9 @@ fn handle_request(ctx: Context, req: Request) -> Response {
     Some(Session), Delete -> session.handle_delete_session(req, session_store)
     Some(Session), _ -> wisp.method_not_allowed(allowed: [Get, Post, Delete])
 
+    Some(OAuthLogin), _ -> todo
+    Some(OAuthCallback), _ -> todo
+
     Some(Groceries), Get -> grocery.handle_get_all_groceries(db_connection)
     Some(Groceries), Post -> grocery.handle_save_groceries(req, db_connection)
     Some(Groceries), _ -> wisp.method_not_allowed(allowed: [Get, Post])
@@ -142,7 +147,12 @@ fn require_valid_session(
 ) -> Response {
   case get_request_path(req) {
     // `None` covers all unrecognised paths.
-    Some(Register) | Some(Session) | Some(Index) | None -> next()
+    Some(Register)
+    | Some(Session)
+    | Some(Index)
+    | Some(OAuthLogin)
+    | Some(OAuthCallback)
+    | None -> next()
     _ -> {
       use <- session.require_valid_session(req, session_store, now)
       next()

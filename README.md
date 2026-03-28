@@ -6,6 +6,13 @@ WaniKani, but for Mandarin.
 
 Disclaimer: This project is not affliated in any way with WaniKani or Tofugu LLC, but it is heavily inspired by WaniKani :)
 
+
+## Getting Started
+
+KaniWani is setup as a single user web app.
+It is intended to be put behind a reverse proxy.
+It also requires an external OpenID Connect (OAuth2) server for authentication.
+
 ## Development
 
 The project is split into three sub-projects:

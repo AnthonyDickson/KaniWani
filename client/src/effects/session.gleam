@@ -7,8 +7,8 @@ import modem
 import rsvp.{type Error}
 
 import api_route.{Session}
-import model.{type Model}
-import msg.{type Msg, LogInMsg, ServerAuthenticatedUser, ServerLoggedOutUser}
+import model.{type Model, LogInPage}
+import msg.{type Msg, ServerAuthenticatedUser, ServerLoggedOutUser}
 import route.{LogIn}
 
 pub fn auto_logout(
@@ -17,7 +17,7 @@ pub fn auto_logout(
 ) -> #(Model, Effect(Msg)) {
   case error {
     rsvp.HttpError(resp) if resp.status == 401 -> #(
-      model.empty_login_page_model(),
+      LogInPage,
       modem.push(route.to_path_string(LogIn), None, None),
     )
     _ -> callback()
@@ -29,9 +29,7 @@ pub fn check_session_status() -> Effect(Msg) {
 
   rsvp.get(
     url,
-    rsvp.expect_ok_response(fn(result) {
-      LogInMsg(ServerAuthenticatedUser(result))
-    }),
+    rsvp.expect_ok_response(fn(result) { ServerAuthenticatedUser(result) }),
   )
 }
 
