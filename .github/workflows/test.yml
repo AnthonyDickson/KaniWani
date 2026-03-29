@@ -17,6 +17,17 @@ jobs:
           gleam-version: "1.15.2"
           rebar3-version: "3"
 
+      - name: Cache Gleam dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ matrix.subproject }}/.lustre
+            ${{ matrix.subproject }}/build
+          key: ${{ runner.os }}-${{ matrix.subproject }}-${{ hashFiles(format('{0}/manifest.toml', matrix.subproject)) }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.subproject }}-
+            ${{ runner.os }}-
+
       - run: cd ${{ matrix.subproject }} && gleam deps download
       - run: cd ${{ matrix.subproject }} && gleam test
       - run: cd ${{ matrix.subproject }} && gleam format --check src test
