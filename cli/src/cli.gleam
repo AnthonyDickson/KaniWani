@@ -65,5 +65,5 @@ fn output_db_path_opt() -> Opt(String) {
 
 fn db_path_opt() -> Opt(String) {
   opt.new("db-path")
-  |> opt.help("The path and filename to the applicatoin database")
+  |> opt.help("The path and filename to the application database")
 }
