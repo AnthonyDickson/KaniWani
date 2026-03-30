@@ -17,6 +17,7 @@ const create_table_sql_filenames = [
   "create_grocery_table.sql",
   "create_vocabulary_table.sql",
   "create_lesson_table.sql",
+  "create_review_table.sql",
 ]
 
 const hsk_vocab_sql_filenames = [
