@@ -1,3 +1,6 @@
 DROP TABLE IF EXISTS password;
-CREATE TABLE password (id INTEGER PRIMARY KEY, password_hash TEXT);
+CREATE TABLE password (
+    id INTEGER PRIMARY KEY NOT NULL,
+    password_hash TEXT NOT NULL
+);
 
