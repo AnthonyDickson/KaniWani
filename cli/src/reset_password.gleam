@@ -118,7 +118,7 @@ fn write_password_hash(
   sqlight.query(
     sql,
     on: db_connection,
-    with: [sqlight.int(0), sqlight.text(password_hash)],
+    with: [sqlight.int(1), sqlight.text(password_hash)],
     expecting: decode.success(Nil),
   )
   |> result.map(fn(_list_of_nil) { Nil })
