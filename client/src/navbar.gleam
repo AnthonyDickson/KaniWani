@@ -5,10 +5,10 @@ import lustre/element
 import lustre/element/html
 
 import msg
-import route.{type Route, Foo, Home, LogOut}
+import route.{type Route, Home, Lesson, LogOut}
 
 pub fn view(current_route: Route) -> element.Element(msg.Msg) {
-  let nav_items = [Home, Foo, LogOut]
+  let nav_items = [Home, Lesson, LogOut]
 
   html.nav(
     [attribute.class("p-2 bg-white shadow-md")],

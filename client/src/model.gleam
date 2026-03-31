@@ -1,4 +1,5 @@
 import gleam/option.{type Option, None}
+import kaniwani/lesson.{type Lesson}
 
 import groceries.{type GroceryItem}
 
@@ -10,7 +11,7 @@ pub type Model {
     saving: Bool,
     error: Option(String),
   )
-  FooPage
+  LessonPage(List(Lesson))
   NotFoundPage
   CheckingAuth
   LogInPage(

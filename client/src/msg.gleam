@@ -11,6 +11,7 @@ pub type Msg {
   // Page messages
   HomeMsg(HomeMsg)
   LogInMsg(LogInMsg)
+  LessonMsg(LessonMsg)
 }
 
 pub type HomeMsg {
@@ -30,3 +31,6 @@ pub type LogInMsg {
   ServerAuthenticatedUser(Result(Response(String), Error))
 }
 
+pub type LessonMsg {
+  UserNavigatedToLessonPage
+}

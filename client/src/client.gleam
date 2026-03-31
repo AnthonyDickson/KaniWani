@@ -12,17 +12,18 @@ import modem
 
 import effects/router
 import effects/session
+import kaniwani_client/page/lesson
 import model.{
-  type Model, CheckingAuth, FooPage, HomePage, LogInPage, NotFoundPage,
+  type Model, CheckingAuth, HomePage, LessonPage, LogInPage, NotFoundPage,
 }
 import msg.{
-  type Msg, ClientChangedRoute, HomeMsg, LogInMsg, ServerAuthenticatedUser,
-  ServerLoggedOutUser, UserNavigatedToHomePage,
+  type Msg, ClientChangedRoute, HomeMsg, LessonMsg, LogInMsg,
+  ServerAuthenticatedUser, ServerLoggedOutUser, UserNavigatedToHomePage,
+  UserNavigatedToLessonPage,
 }
-import page/foo
 import page/home
 import page/log_in
-import route.{type Route, Foo, Home, LogIn, LogOut, NotFound}
+import route.{type Route, Home, Lesson, LogIn, LogOut, NotFound}
 
 pub fn main() -> Nil {
   let app = lustre.application(init, update, view)
@@ -88,10 +89,16 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
     )
     HomePage(..), HomeMsg(msg) -> home.update(model, msg)
 
-    _, ClientChangedRoute(Foo as route) -> #(
-      FooPage,
-      set_title(route.to_page_title(route)),
+    _, ClientChangedRoute(Lesson as route) -> #(
+      LessonPage([]),
+      effect.batch([
+        effect.from(fn(dispatch) {
+          dispatch(LessonMsg(UserNavigatedToLessonPage))
+        }),
+        set_title(route.to_page_title(route)),
+      ]),
     )
+    LessonPage(..), LessonMsg(msg) -> lesson.update(model, msg)
 
     _, ClientChangedRoute(NotFound as route) -> #(
       NotFoundPage,
@@ -134,11 +141,11 @@ fn view(model: Model) -> Element(Msg) {
   case model {
     HomePage(items:, new_item:, loading:, saving:, error:) ->
       home.view(items:, new_item:, loading:, saving:, error:)
-    FooPage -> foo.view()
     CheckingAuth -> view_loading()
     LogInPage(password:, show_password:, error:) ->
       log_in.view(password, show_password, error)
-    _ -> view_not_found()
+    LessonPage(lessons) -> lesson.view(lessons)
+    NotFoundPage -> view_not_found()
   }
 }
 

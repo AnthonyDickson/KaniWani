@@ -1,4 +1,6 @@
-import gleam/erlang/process.{type Subject}
+import api_route.{type ApiRoute, Groceries, Index, Session}
+import envoy
+import gleam/erlang/process
 import gleam/http.{Delete, Get, Post}
 import gleam/int
 import gleam/io
@@ -6,20 +8,17 @@ import gleam/option.{type Option, None, Some}
 import gleam/result
 import gleam/string
 import gleam/time/timestamp.{type Timestamp}
-
-import envoy
+import grocery
+import lesson.{type LessonStore}
+import log_in
 import lustre/attribute
 import lustre/element
 import lustre/element/html
 import mist
+import session.{type SessionStore}
 import sqlight.{type Connection, type Error}
 import wisp.{type Request, type Response}
 import wisp/wisp_mist
-
-import api_route.{type ApiRoute, Groceries, Index, Session}
-import grocery
-import log_in
-import session.{type Message, type SessionStore}
 
 const static_file_path = "/static"
 
@@ -30,7 +29,8 @@ const css_bundle_path = static_file_path <> "/client.css"
 type Context {
   Context(
     db_connection: Connection,
-    session_store: Subject(Message),
+    lesson_store: LessonStore,
+    session_store: SessionStore,
     static_directory: String,
   )
 }
@@ -42,15 +42,17 @@ pub fn main() -> Nil {
   let host = envoy.get("HOST") |> result.unwrap("localhost")
   let port = envoy.get("PORT") |> result.try(int.parse) |> result.unwrap(3000)
 
-  use session_store <- require_session_store()
-
   use db_connection <- sqlight.with_connection(database_path)
   let assert Ok(Nil) = setup_database(db_connection)
+
+  use session_store <- require_session_store()
+  use lesson_store <- require_lesson_store(db_connection)
 
   let assert Ok(priv_directory) = wisp.priv_directory("server")
   let static_directory = priv_directory <> "/static"
 
-  let ctx = Context(db_connection:, static_directory:, session_store:)
+  let ctx =
+    Context(db_connection:, static_directory:, session_store:, lesson_store:)
 
   let assert Ok(_) =
     handle_request(ctx, _)
@@ -75,10 +77,27 @@ fn require_session_store(next: fn(SessionStore) -> Nil) {
   }
 }
 
+fn require_lesson_store(db: Connection, next: fn(LessonStore) -> Nil) {
+  case lesson.start_store(db) {
+    Ok(actor) -> next(actor.data)
+    Error(error) -> {
+      io.println_error(
+        "Could not start lesson store: " <> string.inspect(error),
+      )
+      Nil
+    }
+  }
+}
+
 // Request Handlers -----------------------------------------------------------
 
 fn handle_request(ctx: Context, req: Request) -> Response {
-  let Context(db_connection:, session_store:, static_directory:) = ctx
+  let Context(
+    db_connection:,
+    lesson_store: _,
+    session_store:,
+    static_directory:,
+  ) = ctx
   let now = timestamp.system_time()
   use req <- app_middleware(req, static_directory, session_store, now)
 

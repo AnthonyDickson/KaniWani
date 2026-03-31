@@ -100,6 +100,7 @@ fn handle_message(state: State, message: Message) -> Next(State, Message) {
         self:,
         sessions: dict.delete(from: sessions, delete: id),
       ))
+
     ClearExpiredSessions -> {
       process.send_after(
         self,

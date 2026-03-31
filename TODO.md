@@ -1,14 +1,20 @@
 # TODO
 
-- Plan out basic dashboard
 - Implement basic lessons
+- Refactor projects to nest all but the main file under the folder `kaniwani`.
+  This is to make it clear which modules belong to this project and which are third party.
+- Consider moving database queries from source code into SQL files. Load them all at server start and load them into a
+  dict. Use an enum as the keys. Not sure how well this would work with parameterised queries as it puts the query far
+  away from the code that's calling it. Maybe do something like [squirrel](https://hexdocs.pm/squirrel/index.html)
+- Review restructuring project with liveview like architecture
+  - https://curling.io/blog/live-admin-without-javascript
+  - https://hexdocs.pm/lustre/lustre/server_component.html
 - Implement basic reviews
 - Add a GitHub action that builds the Docker image and makes a release
 - Factor out common component styles
 
 ## Nice to haves
 
-- Add password strength meter corresponding to gzxcvbn score
 - Use [Levenshtein Distance](https://en.wikipedia.org/wiki/Levenshtein_distance) for more forgiving answer checking.
   Answers with a distance of less than one or two could show "not quite" or something and give the user another chance
   at submitting their answer.
