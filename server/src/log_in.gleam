@@ -51,7 +51,7 @@ pub fn handle_log_in(
 }
 
 fn read_password_hash(db_connection: Connection) -> Result(String, LogInError) {
-  let sql = "SELECT password_hash FROM password WHERE id = 0"
+  let sql = "SELECT password_hash FROM password WHERE id = 1"
   let password_hash = {
     use password_hash <- decode.field(0, decode.string)
     decode.success(password_hash)

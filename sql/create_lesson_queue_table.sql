@@ -1,0 +1,5 @@
+DROP TABLE IF EXISTS lesson_queue;
+CREATE TABLE lesson_queue (
+    vocab_id INTEGER PRIMARY KEY NOT NULL,
+    FOREIGN KEY (vocab_id) REFERENCES vocabulary (id) ON UPDATE CASCADE ON DELETE CASCADE
+);

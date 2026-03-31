@@ -16,7 +16,8 @@ const create_table_sql_filenames = [
   "create_password_table.sql",
   "create_grocery_table.sql",
   "create_vocabulary_table.sql",
-  "create_lesson_table.sql",
+  "create_lesson_cursor_table.sql",
+  "create_lesson_queue_table.sql",
   "create_review_table.sql",
 ]
 
@@ -31,7 +32,7 @@ const hsk_vocab_sql_filenames = [
 
 type Error {
   SQLightError(sqlight.Error)
-  SimplifileError(simplifile.FileError)
+  SimplifileError(String)
 }
 
 /// Initialises the application database with all the tables and content.
@@ -80,7 +81,13 @@ fn load_files(
   sql_path: String,
   filenames: List(String),
 ) -> Result(List(String), Error) {
+  let read_file = fn(path) {
+    simplifile.read(path)
+    |> result.map_error(fn(error) {
+      SimplifileError(string.inspect(error) <> ": " <> path)
+    })
+  }
+
   list.map(filenames, filepath.join(sql_path, _))
-  |> list.try_map(with: simplifile.read)
-  |> result.map_error(SimplifileError)
+  |> list.try_map(with: read_file)
 }
