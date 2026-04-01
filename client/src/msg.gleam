@@ -11,7 +11,6 @@ pub type Msg {
   // Page messages
   HomeMsg(HomeMsg)
   LogInMsg(LogInMsg)
-  RegisterMsg(RegisterMsg)
 }
 
 pub type HomeMsg {
@@ -31,9 +30,3 @@ pub type LogInMsg {
   ServerAuthenticatedUser(Result(Response(String), Error))
 }
 
-pub type RegisterMsg {
-  UserTypedRegisterPassword(String)
-  UserCheckedShowRegisterPassword(Bool)
-  UserSentRegistrationForm
-  ServerRegisteredUser(Result(Response(String), Error))
-}
