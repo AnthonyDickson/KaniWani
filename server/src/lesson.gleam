@@ -3,7 +3,6 @@ import gleam/dynamic/decode
 import gleam/erlang/process.{type Subject}
 import gleam/float
 import gleam/int
-import gleam/io
 import gleam/list
 import gleam/otp/actor.{type Next, type StartError, type Started}
 import gleam/result
@@ -11,6 +10,7 @@ import gleam/string
 import gleam/time/duration
 import gleam/time/timestamp.{type Timestamp}
 import kaniwani/lesson.{type Lesson}
+import kaniwani/logging
 import sqlight.{type Connection}
 
 const max_queue_size: Int = 10
@@ -45,11 +45,7 @@ fn handle_message(state: State, message: Message) -> Next(State, Message) {
   let State(self:, db:) = state
 
   case message {
-    GetQueue(reply_with: client) -> {
-      process.send(client, fetch_queue(db))
-      actor.continue(state)
-    }
-
+    GetQueue(reply_with: client) -> handle_get_queue(client, db, state)
     EnqueueLessons -> handle_enqueue_lessons(self, db)
   }
 }
@@ -76,6 +72,15 @@ pub fn get_queue(
   lesson_store: LessonStore,
 ) -> Result(LessonQueue, sqlight.Error) {
   process.call(lesson_store, waiting: get_queue_timeout_ms, sending: GetQueue)
+}
+
+fn handle_get_queue(
+  client: Subject(Result(List(Lesson), sqlight.Error)),
+  db: Connection,
+  state: State,
+) -> Next(State, Message) {
+  process.send(client, fetch_queue(db))
+  actor.continue(state)
 }
 
 fn fetch_queue(db: Connection) -> Result(LessonQueue, sqlight.Error) {
@@ -110,6 +115,10 @@ fn handle_enqueue_lessons(
 ) -> Next(State, Message) {
   process.send_after(self, queue_lessons_interval_ms, EnqueueLessons)
 
+  let start = timestamp.system_time()
+  let next_run_timestamp =
+    timestamp.add(start, duration.milliseconds(queue_lessons_interval_ms))
+
   let outcome = {
     use queued_count <- result.try(count_queued_lessons(db))
     let enqueue_count = int.max(max_queue_size - queued_count, 0)
@@ -120,21 +129,34 @@ fn handle_enqueue_lessons(
     Ok(enqueue_count)
   }
 
+  let elapsed = timestamp.difference(start, timestamp.system_time())
+
   case outcome {
     Ok(enqueue_count) ->
-      io.println(
-        timestamp.system_time() |> timestamp.to_rfc3339(duration.hours(12))
-        <> " enqueued "
-        <> int.to_string(enqueue_count)
-        <> " lessons",
+      logging.info(
+        when: timestamp.system_time(),
+        scope: "EnqueueMessage",
+        what: "Enqueued "
+          <> int.to_string(enqueue_count)
+          <> " lessons in "
+          <> logging.elapsed_string_ms(elapsed),
       )
     Error(error) ->
-      io.println_error(
-        timestamp.system_time() |> timestamp.to_rfc3339(duration.hours(12))
-        <> " "
-        <> string.inspect(error),
+      logging.error(
+        when: timestamp.system_time(),
+        scope: "EnqueueMessage",
+        what: string.inspect(error)
+          <> " in "
+          <> logging.elapsed_string_ms(elapsed),
       )
   }
+
+  logging.info(
+    when: timestamp.system_time(),
+    scope: "EnqueueMessage",
+    what: "Running again at "
+      <> timestamp.to_rfc3339(next_run_timestamp, duration.hours(12)),
+  )
 
   actor.continue(State(self:, db:))
 }
@@ -176,11 +198,15 @@ fn get_max_cursor(db: Connection) -> Result(Int, EnqueueError) {
   |> result.map_error(SqlightError)
 }
 
+/// Add vocabulary items to the lesson queue.
 fn enqueue_lessons(
   db: Connection,
   vocab_ids: List(Int),
   queued_at: Timestamp,
 ) -> Result(Nil, EnqueueError) {
+  // This function directly creates the query string with the interpolated values
+  // instead of passing parameters since only `sqlight.exec` and not
+  // `sqlight.query` supports multiple statements.
   use <- bool.guard(when: vocab_ids == [], return: Ok(Nil))
   use last <- result.try(
     list.last(vocab_ids) |> result.replace_error(EmptyVocabIdList),
@@ -196,7 +222,6 @@ fn enqueue_lessons(
       ["BEGIN;", update_cursor_query, enqueue_lessons_query, "COMMIT;"],
       with: "\n",
     )
-  io.println(query)
 
   sqlight.exec(query, on: db)
   |> result.map(fn(_) { Nil })
