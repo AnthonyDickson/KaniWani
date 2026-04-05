@@ -1,4 +1,3 @@
-import api_route.{type ApiRoute, Groceries, Index, Session}
 import envoy
 import gleam/erlang/process
 import gleam/http.{Delete, Get, Post}
@@ -9,6 +8,7 @@ import gleam/result
 import gleam/string
 import gleam/time/timestamp.{type Timestamp}
 import grocery
+import kaniwani/api_route.{type ApiRoute, Groceries, Index, Session}
 import lesson.{type LessonStore}
 import log_in
 import lustre/attribute

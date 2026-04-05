@@ -10,15 +10,15 @@ import lustre/element/html
 import lustre/event
 import rsvp.{HttpError}
 
-import api_route.{Session}
 import effects/router
 import error_view
+import kaniwani/shared/api_route.{Session}
+import kaniwani/shared/password
 import model.{type Model, LogInPage}
 import msg.{
   type LogInMsg, type Msg, LogInMsg, ServerAuthenticatedUser,
   UserCheckedShowPassword, UserSentLogInForm, UserTypedPassword,
 }
-import password
 import route.{Home}
 
 const docs_url = "https://github.com/AnthonyDickson/KaniWani/blob/main/README.md"

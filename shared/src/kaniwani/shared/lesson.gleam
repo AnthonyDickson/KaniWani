@@ -1,6 +1,6 @@
 import gleam/dynamic/decode.{type Decoder}
 import gleam/json
-import kaniwani/hsk_level.{type HskLevel}
+import kaniwani/shared/hsk_level.{type HskLevel}
 
 pub type Lesson {
   Lesson(

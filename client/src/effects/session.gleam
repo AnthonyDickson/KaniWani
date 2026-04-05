@@ -6,7 +6,7 @@ import lustre/effect.{type Effect}
 import modem
 import rsvp.{type Error}
 
-import api_route.{Session}
+import kaniwani/shared/api_route.{Session}
 import model.{type Model}
 import msg.{type Msg, LogInMsg, ServerAuthenticatedUser, ServerLoggedOutUser}
 import route.{LogIn}

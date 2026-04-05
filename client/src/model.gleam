@@ -1,7 +1,6 @@
 import gleam/option.{type Option, None}
-import kaniwani/lesson.{type Lesson}
-
-import groceries.{type GroceryItem}
+import kaniwani/shared/groceries.{type GroceryItem}
+import kaniwani/shared/lesson.{type Lesson}
 
 pub type Model {
   HomePage(

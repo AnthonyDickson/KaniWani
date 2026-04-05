@@ -1,6 +1,6 @@
 import gleam/io
 import gleam/string
-import kaniwani/lesson.{type Lesson}
+import kaniwani/shared/lesson.{type Lesson}
 import lustre/effect.{type Effect}
 import lustre/element.{type Element}
 import lustre/element/html

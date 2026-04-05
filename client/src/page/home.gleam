@@ -13,11 +13,11 @@ import lustre/element/html
 import lustre/event
 import rsvp
 
-import api_route.{Groceries}
 import effects/session
 import error_view
-import groceries.{type GroceryItem, GroceryItem}
 import json_helpers
+import kaniwani/shared/api_route.{Groceries}
+import kaniwani/shared/groceries.{type GroceryItem, GroceryItem}
 import model.{type Model, HomePage}
 import msg.{
   type HomeMsg, type Msg, HomeMsg, ServerLoadedList, ServerSavedList,
