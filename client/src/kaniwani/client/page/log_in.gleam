@@ -40,7 +40,7 @@ pub fn update(model: Model, msg: LogInMsg) -> #(Model, Effect(Msg)) {
 
     LogInPage(..), ServerAuthenticatedUser(Ok(_)) -> #(
       model.empty_home_page_model(),
-      router.navigate_to(Home),
+      router.navigate(to: Home),
     )
 
     LogInPage(..),

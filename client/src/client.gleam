@@ -36,13 +36,13 @@ fn init(_: Nil) -> #(Model, Effect(Msg)) {
     |> result.unwrap(uri.empty)
     |> route.from_uri
 
-  let model = CheckingAuth
+  let model = CheckingAuth(route)
 
   #(
     model,
     effect.batch([
       modem.init(on_url_change),
-      set_title(route.to_page_title(route)),
+      router.update_title(route),
       session.check_session_status(),
     ]),
   )
@@ -56,14 +56,13 @@ fn on_url_change(uri: Uri) -> Msg {
 
 fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
   case model, msg {
-    CheckingAuth, LogInMsg(ServerAuthenticatedUser(Ok(_))) -> #(
-      model.empty_home_page_model(),
-      router.navigate_to(Home),
-    )
+    CheckingAuth(redirect_to: target_route),
+      LogInMsg(ServerAuthenticatedUser(Ok(_)))
+    -> #(model.empty_home_page_model(), router.replace(target_route))
 
-    CheckingAuth, LogInMsg(ServerAuthenticatedUser(Error(_))) -> #(
+    CheckingAuth(_), LogInMsg(ServerAuthenticatedUser(Error(_))) -> #(
       model.empty_login_page_model(),
-      router.navigate_to(LogIn),
+      router.navigate(to: LogIn),
     )
 
     LogInPage(..), ClientChangedRoute(route) ->
@@ -73,35 +72,32 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
     _, ClientChangedRoute(LogOut) -> #(model, session.send_log_out_request())
     _, ServerLoggedOutUser(..) -> #(
       model.empty_login_page_model(),
-      router.navigate_to(LogIn),
+      router.navigate(to: LogIn),
     )
 
     _, ClientChangedRoute(LogIn) -> #(model, modem.back(1))
 
-    _, ClientChangedRoute(Home as route) -> #(
+    _, ClientChangedRoute(Home) -> #(
       model.empty_home_page_model(),
       effect.batch([
         effect.from(fn(dispatch) { dispatch(HomeMsg(UserNavigatedToHomePage)) }),
-        set_title(route.to_page_title(route)),
+        router.update_title(Home),
       ]),
     )
     HomePage(..), HomeMsg(msg) -> home.update(model, msg)
 
-    _, ClientChangedRoute(Lesson as route) -> #(
+    _, ClientChangedRoute(Lesson) -> #(
       LessonPage([]),
       effect.batch([
         effect.from(fn(dispatch) {
           dispatch(LessonMsg(UserNavigatedToLessonPage))
         }),
-        set_title(route.to_page_title(route)),
+        router.update_title(Lesson),
       ]),
     )
     LessonPage(..), LessonMsg(msg) -> lesson.update(model, msg)
 
-    _, ClientChangedRoute(NotFound as route) -> #(
-      NotFoundPage,
-      set_title(route.to_page_title(route)),
-    )
+    _, ClientChangedRoute(NotFound) -> #(NotFoundPage, effect.none())
 
     _, _ -> {
       io.println_error(
@@ -120,18 +116,10 @@ fn handle_login_page_route_change(
   target_route: Route,
 ) -> #(Model, Effect(Msg)) {
   case target_route {
-    LogIn -> #(model, set_title(route.to_page_title(LogIn)))
-    _ -> #(model.empty_login_page_model(), router.navigate_to(LogIn))
+    LogIn -> #(model, router.update_title(LogIn))
+    _ -> #(model.empty_login_page_model(), router.navigate(LogIn))
   }
 }
-
-fn set_title(title: String) -> Effect(Msg) {
-  use _ <- effect.from
-  set_title_js(title)
-}
-
-@external(javascript, "./client.ffi.mjs", "setTitle")
-fn set_title_js(title: String) -> Nil
 
 // View -----------------------------------------------------------------------
 
@@ -139,7 +127,7 @@ fn view(model: Model) -> Element(Msg) {
   case model {
     HomePage(items:, new_item:, loading:, saving:, error:) ->
       home.view(items:, new_item:, loading:, saving:, error:)
-    CheckingAuth -> view_loading()
+    CheckingAuth(_) -> view_loading()
     LogInPage(password:, show_password:, error:) ->
       log_in.view(password, show_password, error)
     LessonPage(lessons) -> lesson.view(lessons)
@@ -148,7 +136,7 @@ fn view(model: Model) -> Element(Msg) {
 }
 
 fn view_not_found() -> Element(Msg) {
-  html.div([], [
+  html.main([], [
     html.h1([attribute.class("text-lg font-bold")], [
       html.text("Page Not Found"),
     ]),
@@ -165,5 +153,5 @@ fn view_not_found() -> Element(Msg) {
 }
 
 fn view_loading() -> Element(Msg) {
-  html.div([], [html.h1([], [html.text("Loading...")])])
+  html.main([], [html.h1([], [html.text("Loading...")])])
 }

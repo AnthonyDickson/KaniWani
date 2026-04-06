@@ -1,4 +1,5 @@
 import gleam/option.{type Option, None}
+import kaniwani/client/route.{type Route}
 import kaniwani/shared/groceries.{type GroceryItem}
 import kaniwani/shared/lesson.{type Lesson}
 
@@ -12,7 +13,7 @@ pub type Model {
   )
   LessonPage(List(Lesson))
   NotFoundPage
-  CheckingAuth
+  CheckingAuth(redirect_to: Route)
   LogInPage(
     /// The password entered in the log in form
     password: String,
