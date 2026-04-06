@@ -8,10 +8,13 @@ import gleam/result
 import gleam/string
 import gleam/time/timestamp.{type Timestamp}
 import kaniwani/server/grocery
-import kaniwani/server/lesson.{type LessonStore}
+import kaniwani/server/lesson_api
+import kaniwani/server/lesson_store.{type LessonStore}
 import kaniwani/server/log_in
 import kaniwani/server/session.{type SessionStore}
-import kaniwani/shared/api_route.{type ApiRoute, Groceries, Index, Session}
+import kaniwani/shared/api_route.{
+  type ApiRoute, Groceries, Index, Lesson, Session,
+}
 import lustre/attribute
 import lustre/element
 import lustre/element/html
@@ -78,7 +81,7 @@ fn require_session_store(next: fn(SessionStore) -> Nil) {
 }
 
 fn require_lesson_store(db: Connection, next: fn(LessonStore) -> Nil) {
-  case lesson.start_store(db) {
+  case lesson_store.start_store(db) {
     Ok(actor) -> next(actor.data)
     Error(error) -> {
       io.println_error(
@@ -92,12 +95,8 @@ fn require_lesson_store(db: Connection, next: fn(LessonStore) -> Nil) {
 // Request Handlers -----------------------------------------------------------
 
 fn handle_request(ctx: Context, req: Request) -> Response {
-  let Context(
-    db_connection:,
-    lesson_store: _,
-    session_store:,
-    static_directory:,
-  ) = ctx
+  let Context(db_connection:, lesson_store:, session_store:, static_directory:) =
+    ctx
   let now = timestamp.system_time()
   use req <- app_middleware(req, static_directory, session_store, now)
 
@@ -115,6 +114,9 @@ fn handle_request(ctx: Context, req: Request) -> Response {
     Some(Groceries), Get -> grocery.handle_get_all_groceries(db_connection)
     Some(Groceries), Post -> grocery.handle_save_groceries(req, db_connection)
     Some(Groceries), _ -> wisp.method_not_allowed(allowed: [Get, Post])
+
+    Some(Lesson), Get -> lesson_api.handle_get_lessons(lesson_store)
+    Some(Lesson), _ -> wisp.method_not_allowed(allowed: [Get])
 
     None, _ -> wisp.not_found()
   }

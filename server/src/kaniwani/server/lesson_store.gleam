@@ -10,7 +10,8 @@ import gleam/string
 import gleam/time/duration
 import gleam/time/timestamp.{type Timestamp}
 import kaniwani/server/logging
-import kaniwani/shared/lesson.{type Lesson}
+import kaniwani/shared/hsk_level
+import kaniwani/shared/lesson.{type Lesson, Lesson}
 import sqlight.{type Connection}
 
 const max_queue_size: Int = 10
@@ -94,10 +95,28 @@ fn fetch_queue(db: Connection) -> Result(LessonQueue, sqlight.Error) {
       vocab.pinyin_display,
       vocab.definition
     FROM lesson_queue 
-    INNER JOIN vocab 
+    INNER JOIN vocabulary AS vocab
     ON lesson_queue.vocab_id = vocab.id;
     "
-  sqlight.query(query, on: db, with: [], expecting: lesson.decoder())
+  let decoder = {
+    use id <- decode.field(0, decode.int)
+    use hsk_level <- decode.field(1, hsk_level.decoder())
+    use hans <- decode.field(2, decode.string)
+    use hant <- decode.field(3, decode.string)
+    use pinyin_input <- decode.field(4, decode.string)
+    use pinyin_display <- decode.field(5, decode.string)
+    use definition <- decode.field(6, decode.string)
+    decode.success(Lesson(
+      id:,
+      hsk_level:,
+      hans:,
+      hant:,
+      pinyin_input:,
+      pinyin_display:,
+      definition:,
+    ))
+  }
+  sqlight.query(query, on: db, with: [], expecting: decoder)
 }
 
 //----------------------------------------------------------------------------//

@@ -12,24 +12,24 @@ pub type HskLevel {
 
 pub fn to_json(hsk_level: HskLevel) -> json.Json {
   case hsk_level {
-    One -> json.string("one")
-    Two -> json.string("two")
-    Three -> json.string("three")
-    Four -> json.string("four")
-    Five -> json.string("five")
-    Six -> json.string("six")
+    One -> json.int(1)
+    Two -> json.int(2)
+    Three -> json.int(3)
+    Four -> json.int(4)
+    Five -> json.int(5)
+    Six -> json.int(6)
   }
 }
 
 pub fn decoder() -> decode.Decoder(HskLevel) {
-  use variant <- decode.then(decode.string)
+  use variant <- decode.then(decode.int)
   case variant {
-    "one" -> decode.success(One)
-    "two" -> decode.success(Two)
-    "three" -> decode.success(Three)
-    "four" -> decode.success(Four)
-    "five" -> decode.success(Five)
-    "six" -> decode.success(Six)
+    1 -> decode.success(One)
+    2 -> decode.success(Two)
+    3 -> decode.success(Three)
+    4 -> decode.success(Four)
+    5 -> decode.success(Five)
+    6 -> decode.success(Six)
     _ -> decode.failure(One, "HskLevel")
   }
 }
