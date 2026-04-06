@@ -5,28 +5,26 @@ import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/result
 import gleam/string
-
+import kaniwani/client/effects/session
+import kaniwani/client/error_view
+import kaniwani/client/json_helpers
+import kaniwani/client/model.{type Model, HomePage}
+import kaniwani/client/msg.{
+  type HomeMsg, type Msg, HomeMsg, ServerLoadedList, ServerSavedList,
+  UserAddedItem, UserNavigatedToHomePage, UserSavedList, UserTypedNewItem,
+  UserUpdatedQuantity,
+}
+import kaniwani/client/navbar
+import kaniwani/client/route.{Home}
+import kaniwani/client/rsvp_helpers
+import kaniwani/shared/api_route.{Groceries}
+import kaniwani/shared/groceries.{type GroceryItem, GroceryItem}
 import lustre/attribute
 import lustre/effect.{type Effect}
 import lustre/element.{type Element}
 import lustre/element/html
 import lustre/event
 import rsvp
-
-import effects/session
-import error_view
-import json_helpers
-import kaniwani/shared/api_route.{Groceries}
-import kaniwani/shared/groceries.{type GroceryItem, GroceryItem}
-import model.{type Model, HomePage}
-import msg.{
-  type HomeMsg, type Msg, HomeMsg, ServerLoadedList, ServerSavedList,
-  UserAddedItem, UserNavigatedToHomePage, UserSavedList, UserTypedNewItem,
-  UserUpdatedQuantity,
-}
-import navbar
-import route.{Home}
-import rsvp_helpers
 
 pub fn update(model: Model, msg: HomeMsg) -> #(Model, Effect(Msg)) {
   case model, msg {

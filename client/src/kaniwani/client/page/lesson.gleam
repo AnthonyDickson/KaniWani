@@ -1,13 +1,13 @@
 import gleam/io
 import gleam/string
+import kaniwani/client/model.{type Model, LessonPage}
+import kaniwani/client/msg.{type LessonMsg, type Msg, UserNavigatedToLessonPage}
+import kaniwani/client/navbar
+import kaniwani/client/route
 import kaniwani/shared/lesson.{type Lesson}
 import lustre/effect.{type Effect}
 import lustre/element.{type Element}
 import lustre/element/html
-import model.{type Model, LessonPage}
-import msg.{type LessonMsg, type Msg, UserNavigatedToLessonPage}
-import navbar
-import route
 
 pub fn update(model: Model, msg: LessonMsg) -> #(Model, Effect(Msg)) {
   case model, msg {

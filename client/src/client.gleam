@@ -2,28 +2,26 @@ import gleam/io
 import gleam/result
 import gleam/string
 import gleam/uri.{type Uri}
-
+import kaniwani/client/effects/router
+import kaniwani/client/effects/session
+import kaniwani/client/model.{
+  type Model, CheckingAuth, HomePage, LessonPage, LogInPage, NotFoundPage,
+}
+import kaniwani/client/msg.{
+  type Msg, ClientChangedRoute, HomeMsg, LessonMsg, LogInMsg,
+  ServerAuthenticatedUser, ServerLoggedOutUser, UserNavigatedToHomePage,
+  UserNavigatedToLessonPage,
+}
+import kaniwani/client/page/home
+import kaniwani/client/page/lesson
+import kaniwani/client/page/log_in
+import kaniwani/client/route.{type Route, Home, Lesson, LogIn, LogOut, NotFound}
 import lustre
 import lustre/attribute
 import lustre/effect.{type Effect}
 import lustre/element.{type Element}
 import lustre/element/html
 import modem
-
-import effects/router
-import effects/session
-import kaniwani_client/page/lesson
-import model.{
-  type Model, CheckingAuth, HomePage, LessonPage, LogInPage, NotFoundPage,
-}
-import msg.{
-  type Msg, ClientChangedRoute, HomeMsg, LessonMsg, LogInMsg,
-  ServerAuthenticatedUser, ServerLoggedOutUser, UserNavigatedToHomePage,
-  UserNavigatedToLessonPage,
-}
-import page/home
-import page/log_in
-import route.{type Route, Home, Lesson, LogIn, LogOut, NotFound}
 
 pub fn main() -> Nil {
   let app = lustre.application(init, update, view)

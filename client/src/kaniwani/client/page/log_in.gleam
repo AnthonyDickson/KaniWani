@@ -2,24 +2,22 @@ import gleam/http/response.{Response}
 import gleam/io
 import gleam/option.{type Option, None, Some}
 import gleam/string
-
+import kaniwani/client/effects/router
+import kaniwani/client/error_view
+import kaniwani/client/model.{type Model, LogInPage}
+import kaniwani/client/msg.{
+  type LogInMsg, type Msg, LogInMsg, ServerAuthenticatedUser,
+  UserCheckedShowPassword, UserSentLogInForm, UserTypedPassword,
+}
+import kaniwani/client/route.{Home}
+import kaniwani/shared/api_route.{Session}
+import kaniwani/shared/password
 import lustre/attribute
 import lustre/effect.{type Effect}
 import lustre/element.{type Element}
 import lustre/element/html
 import lustre/event
 import rsvp.{HttpError}
-
-import effects/router
-import error_view
-import kaniwani/shared/api_route.{Session}
-import kaniwani/shared/password
-import model.{type Model, LogInPage}
-import msg.{
-  type LogInMsg, type Msg, LogInMsg, ServerAuthenticatedUser,
-  UserCheckedShowPassword, UserSentLogInForm, UserTypedPassword,
-}
-import route.{Home}
 
 const docs_url = "https://github.com/AnthonyDickson/KaniWani/blob/main/README.md"
 

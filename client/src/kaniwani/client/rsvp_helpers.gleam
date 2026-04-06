@@ -3,10 +3,8 @@ import gleam/int
 import gleam/list
 import gleam/pair
 import gleam/string
-
+import kaniwani/client/json_helpers
 import rsvp
-
-import json_helpers
 
 pub fn describe_error(error: rsvp.Error) -> String {
   let response_to_string = fn(response: response.Response(String)) {

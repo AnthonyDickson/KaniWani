@@ -1,15 +1,15 @@
 import gleam/http
 import gleam/http/request
 import gleam/option.{None}
-
+import kaniwani/client/model.{type Model}
+import kaniwani/client/msg.{
+  type Msg, LogInMsg, ServerAuthenticatedUser, ServerLoggedOutUser,
+}
+import kaniwani/client/route.{LogIn}
+import kaniwani/shared/api_route.{Session}
 import lustre/effect.{type Effect}
 import modem
 import rsvp.{type Error}
-
-import kaniwani/shared/api_route.{Session}
-import model.{type Model}
-import msg.{type Msg, LogInMsg, ServerAuthenticatedUser, ServerLoggedOutUser}
-import route.{LogIn}
 
 pub fn auto_logout(
   error: Error,

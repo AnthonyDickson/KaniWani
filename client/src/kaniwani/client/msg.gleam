@@ -1,8 +1,6 @@
 import gleam/http/response.{type Response}
-
+import kaniwani/client/route.{type Route}
 import rsvp.{type Error}
-
-import route.{type Route}
 
 pub type Msg {
   // Application messages

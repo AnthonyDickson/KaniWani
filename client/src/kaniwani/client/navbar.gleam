@@ -1,11 +1,9 @@
 import gleam/list
-
+import kaniwani/client/msg
+import kaniwani/client/route.{type Route, Home, Lesson, LogOut}
 import lustre/attribute
 import lustre/element
 import lustre/element/html
-
-import msg
-import route.{type Route, Home, Lesson, LogOut}
 
 pub fn view(current_route: Route) -> element.Element(msg.Msg) {
   let nav_items = [Home, Lesson, LogOut]
