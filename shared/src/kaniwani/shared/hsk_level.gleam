@@ -10,15 +10,19 @@ pub type HskLevel {
   Six
 }
 
-pub fn to_json(hsk_level: HskLevel) -> json.Json {
+pub fn to_int(hsk_level: HskLevel) -> Int {
   case hsk_level {
-    One -> json.int(1)
-    Two -> json.int(2)
-    Three -> json.int(3)
-    Four -> json.int(4)
-    Five -> json.int(5)
-    Six -> json.int(6)
+    One -> 1
+    Two -> 2
+    Three -> 3
+    Four -> 4
+    Five -> 5
+    Six -> 6
   }
+}
+
+pub fn to_json(hsk_level: HskLevel) -> json.Json {
+  hsk_level |> to_int |> json.int
 }
 
 pub fn decoder() -> decode.Decoder(HskLevel) {

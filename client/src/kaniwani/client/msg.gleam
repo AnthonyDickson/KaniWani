@@ -31,4 +31,7 @@ pub type LogInMsg {
 
 pub type LessonMsg {
   UserNavigatedToLessonPage
+  ClientLoadedLessons(Result(Response(String), Error))
+  UserClickedNextInfo
+  UserClickedPreviousInfo
 }

@@ -5,7 +5,8 @@ import gleam/uri.{type Uri}
 import kaniwani/client/effects/router
 import kaniwani/client/effects/session
 import kaniwani/client/model.{
-  type Model, CheckingAuth, HomePage, LessonPage, LogInPage, NotFoundPage,
+  type Model, CheckingAuth, HomePage, LessonLoading, LessonPage, LogInPage,
+  NotFoundPage,
 }
 import kaniwani/client/msg.{
   type Msg, ClientChangedRoute, HomeMsg, LessonMsg, LogInMsg,
@@ -87,7 +88,7 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
     HomePage(..), HomeMsg(msg) -> home.update(model, msg)
 
     _, ClientChangedRoute(Lesson) -> #(
-      LessonPage([]),
+      LessonPage(LessonLoading),
       effect.batch([
         effect.from(fn(dispatch) {
           dispatch(LessonMsg(UserNavigatedToLessonPage))
@@ -130,7 +131,7 @@ fn view(model: Model) -> Element(Msg) {
     CheckingAuth(_) -> view_loading()
     LogInPage(password:, show_password:, error:) ->
       log_in.view(password, show_password, error)
-    LessonPage(lessons) -> lesson.view(lessons)
+    LessonPage(lesson_model) -> lesson.view(lesson_model)
     NotFoundPage -> view_not_found()
   }
 }
