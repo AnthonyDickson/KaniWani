@@ -7,15 +7,15 @@ import gleam/option.{type Option, None, Some}
 import gleam/result
 import gleam/string
 import gleam/time/timestamp.{type Timestamp}
-import grocery
-import kaniwani/api_route.{type ApiRoute, Groceries, Index, Session}
-import lesson.{type LessonStore}
-import log_in
+import kaniwani/server/grocery
+import kaniwani/server/lesson.{type LessonStore}
+import kaniwani/server/log_in
+import kaniwani/server/session.{type SessionStore}
+import kaniwani/shared/api_route.{type ApiRoute, Groceries, Index, Session}
 import lustre/attribute
 import lustre/element
 import lustre/element/html
 import mist
-import session.{type SessionStore}
 import sqlight.{type Connection, type Error}
 import wisp.{type Request, type Response}
 import wisp/wisp_mist

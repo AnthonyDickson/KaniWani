@@ -9,8 +9,8 @@ import gleam/result
 import gleam/string
 import gleam/time/duration
 import gleam/time/timestamp.{type Timestamp}
-import kaniwani/lesson.{type Lesson}
-import kaniwani/logging
+import kaniwani/server/logging
+import kaniwani/shared/lesson.{type Lesson}
 import sqlight.{type Connection}
 
 const max_queue_size: Int = 10

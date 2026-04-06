@@ -7,7 +7,7 @@ import gleam/string
 import sqlight.{type Connection, type Error}
 import wisp.{type Request, type Response}
 
-import groceries.{type GroceryItem, GroceryItem}
+import kaniwani/shared/groceries.{type GroceryItem, GroceryItem}
 
 type SaveGroceriesError {
   DecodeError(List(decode.DecodeError))
