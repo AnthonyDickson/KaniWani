@@ -2,15 +2,13 @@
 
 - Implement basic lessons
 - Refactor `Model` to a record with a `page` field and move page variants out into own record types
-- Split definitions column into primary meaning and secondary meanings
+- Split definitions column into primary meaning and secondary meanings for HSK 3, 4, 5, 6 vocab
+- Convert multiple readings into semicolon separated lists
 - Add example sentences for each vocab (start with HSK 1)
 - Change home page to dashboard and add link to lessons with lesson count preview
 - Update lesson page to have routes that allow for continuing after reload
   - Links for each step in lessons info, quiz and lesson item
 - Add table for keeping track of last time lesson queuing was run so that it is run every 24 hours even with server restarts
-- Allow multiple senses per word
-  - For words that have multiple readings, each corresponding to different meaning
-  - Some words with multiple readings/meanings have been split into multiple rows, these will need to be merged back
 - Serve vocab up as JSON asset and have lesson queue return IDs?
 - Consider moving database queries from source code into SQL files. Load them all at server start and load them into a
   dict. Use an enum as the keys. Not sure how well this would work with parameterised queries as it puts the query far
